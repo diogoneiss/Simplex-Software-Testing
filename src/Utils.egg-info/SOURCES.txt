@@ -1,0 +1,13 @@
+pyproject.toml
+src/auxiliar_lp.py
+src/exceptions.py
+src/main.py
+src/simplex.py
+src/tableau.py
+src/Utils/__init__.py
+src/Utils/linear_algebra.py
+src/Utils/read_json.py
+src/Utils.egg-info/PKG-INFO
+src/Utils.egg-info/SOURCES.txt
+src/Utils.egg-info/dependency_links.txt
+src/Utils.egg-info/top_level.txt

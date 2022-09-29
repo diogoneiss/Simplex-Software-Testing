@@ -1,0 +1,6 @@
+Utils
+auxiliar_lp
+exceptions
+main
+simplex
+tableau
