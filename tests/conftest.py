@@ -1,6 +1,16 @@
 import pytest
 import os
 from pathlib import Path
+
+import sys
+from pathlib import Path
+print("\nEntering conftest.py (first file before tests run) ")
+PROJECT_DIR = Path(__file__).resolve().parents[1] / "src" / "Utils"
+print("Project dir: ", PROJECT_DIR)
+#sys.path.append( str(PROJECT_DIR))
+print("sys.path: ")
+print(sys.path)
+print("____")
 from Utils.read_json import inject_test_data
 
 
