@@ -1,0 +1,12 @@
+<application>
+  <component name="FindSettings">
+    <option name="customScope" value="Project 'SimplexProject'" />
+    <option name="defaultScopeName" value="Project 'SimplexProject'" />
+    <option name="SEARCH_SCOPE" value="Project 'SimplexProject'" />
+    <mask>*.css</mask>
+    <mask>*.html</mask>
+    <mask>*.xml</mask>
+    <mask>*.pyw</mask>
+    <mask>*.py</mask>
+  </component>
+</application>
