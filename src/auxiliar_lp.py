@@ -19,14 +19,17 @@ class AuxiliarLP:
         self.old_c = tableau[0]
 
     def __run_auxiliar_lp(self):
+
+        # put sythetic columns in canonical form
         canonical_tableau = self.setup_canonical_form()
 
         # create simplex object with the new tableau and variables
         simplexObj = Simplex(m=self.new_m_variables, n=self.n_restrictions, tableau=canonical_tableau)
 
+        # run simplex
         self.tableau = simplexObj.solve()
 
-        # if 0 value for objective function not found it is unfeasible
+        # if a 0 value objective function is not found then it is unfeasible
         if self.is_unfeasible():
             raise UnfeasibleError
 
@@ -41,12 +44,21 @@ class AuxiliarLP:
         # throws exception if unfeasible
         self.__run_auxiliar_lp()
 
+        new_c = self.tableau[0]
+        old_c = self.old_c
+
+        SIMULATE_AUXILIAR_OPERATIONS_IN_C = False
+
         # remove synthetic columns (2*n+m to 3n+m) and restore c
         start_synthetic = self.m_variables + 2 * self.n_restrictions
         self.tableau = np.delete(self.tableau, np.s_[start_synthetic: start_synthetic + self.n_restrictions], axis=1)
 
-        self.__restore_original_c()
+        if SIMULATE_AUXILIAR_OPERATIONS_IN_C:
+            self.__restore_original_c()
+        else:
+            self.tableau[0] = self.old_c
 
+        # after c is reinserted we need to redo the canonical form (make the basis columns canonical)
         self.tableau = Simplex.putInCanonicalForm(self.tableau)
 
         return self.tableau

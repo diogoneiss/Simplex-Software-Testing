@@ -34,8 +34,8 @@ class SimplexRunner:
         """ Cria o objeto e le a entrada
         """
 
-        self.n_restrictions, self.m_variables = TableauParsing.readDimensions()
-        self.tableau = TableauParsing.readAndCreateTableau(self.n_restrictions, self.m_variables)
+        self.n_restrictions, self.m_variables = TableauParsing.read_n_m_dimensions()
+        self.tableau = TableauParsing.read_ab_and_create_tableau(self.n_restrictions, self.m_variables)
 
         self.simplex = None
 
