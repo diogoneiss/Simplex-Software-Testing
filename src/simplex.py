@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 from Utils.linear_algebra import LinearAlgebra
-from exceptions import UnboundedError
+from exceptions import UnboundedError, UnfeasibleError
 
 
 class Simplex:
@@ -24,8 +24,8 @@ class Simplex:
 
         while not stop:
             # check if unbounded
-            # if self.isUnbounded(self.tableau):
-            #    raise UnboundedError
+            if self.isUnbounded(self.tableau):
+               raise UnboundedError
 
             # pivotear
             row, column = self.findPivot(self.tableau, n_restrictions=self.n_restrictions)
@@ -41,23 +41,32 @@ class Simplex:
     @staticmethod
     def isUnbounded(tableau: np.ndarray):
 
-        for column in tableau[:, ]:
-
-            # vetor booleano se a coluna é menor que zero
-            isNegativeArr = np.where(column < 0)
-
-            # lembrar c < 0 no tableau implica em c > 0 na funcao objetivo, pq aqui ele está multiplicado
-            # por -1, entao preciso ver se ele esta positivo no tableau
-            c_negative_in_objective_function = not isNegativeArr[0]
-            # se para um x_i seu c verdadeiro é < 0 e o Ai é completamente
-            # negativo, podemos concluir que podemos aumentar esse x_i infinitamente, junto de aumentar outro
-            # x_j "normal", sem violar nenhuma restricao
-            allNegative = np.all(isNegativeArr[1:])
-
-            if allNegative and c_negative_in_objective_function:
+        # percorre as colunas do tableau
+        for column in tableau.T:
+            is_negative_array = column < 0
+            # se todos numeros forem menores que zero, é ilimitada
+            if all(is_negative_array):
                 return True
 
         return False
+
+        # for column in tableau[:, ]:
+        #
+        #     # vetor booleano se a coluna é menor que zero
+        #     isNegativeArr = np.where(column < 0)
+        #
+        #     # lembrar c < 0 no tableau implica em c > 0 na funcao objetivo, pq aqui ele está multiplicado
+        #     # por -1, entao preciso ver se ele esta positivo no tableau
+        #     c_negative_in_objective_function = not isNegativeArr[0]
+        #     # se para um x_i seu c verdadeiro é < 0 e o Ai é completamente
+        #     # negativo, podemos concluir que podemos aumentar esse x_i infinitamente, junto de aumentar outro
+        #     # x_j "normal", sem violar nenhuma restricao
+        #     allNegative = np.all(isNegativeArr[1:])
+        #
+        #     if allNegative and c_negative_in_objective_function:
+        #         return True
+        #
+        # return False
 
     def isSimplexDone(self):
         """ Verifica se o simplex terminou de executar, ou seja, se C > 0 e B > 0
@@ -140,8 +149,8 @@ class Simplex:
                     smallestRatio = ratio
                     row = j
 
-        if row == column_i == -1:
-            raise Exception("Colocar texto da excessao de ilimitada")
+        if column_i == -1:
+            raise UnfeasibleError
 
         return row, column_i
 

@@ -1,4 +1,6 @@
 import logging
+import math
+
 import numpy as np
 
 from simplex import Simplex
@@ -116,7 +118,7 @@ class AuxiliarLP:
 
         # se o resultado for 0, é otimo.
         # TODO: Ver caso do livro do Thie, que o Scipy resolve
-        if result == 0:
+        if math.isclose(result, 0):
             basic_variables = LinearAlgebra.findBasicColumns(self.tableau, self.n_restrictions, True)
             logging.debug("basic_variables", basic_variables)
 

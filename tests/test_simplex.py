@@ -108,3 +108,26 @@ class TestSimplex:
         ]
 
         npt.assert_almost_equal(tableau, expectedTableau)
+    def test_returns_is_unbounded(self):
+        baseTableau = np.array([
+            [-1, -1, -1, -4, -4, 0, 0, -1, -21],
+            [1, 0, 0, 2, 1, 1, 0, -1, 8],
+            [0, 1, 0, 1, 2, 0, 1, -1, 8],
+            [0, 0, 1, 1, 1, 0, 0, -1, 5],
+        ])
+
+        result = Simplex.isUnbounded(baseTableau)
+
+        npt.assert_equal(result, True)
+
+    def test_returns_is_not_unbounded(self):
+        baseTableau = np.array([
+            [-1, -1, -1, -4, -4, -2, -2, -1, -21],
+            [1, 0, 0, 2, 1, 1, 0, 1, 8],
+            [0, 1, 0, 1, 2, 0, 1, -1, 8],
+            [0, 0, 1, 1, 1, 0, 0, -1, 5],
+        ])
+
+        result = Simplex.isUnbounded(baseTableau)
+
+        npt.assert_equal(result, False)
