@@ -5,6 +5,30 @@ import logging
 class LinearAlgebra:
 
     @staticmethod
+    def retrive_certificate(tableau, n_restrictions):
+        firstRow = tableau[0]
+        return firstRow[:n_restrictions]
+
+
+    @staticmethod
+    def replace_values_smaller_then_tol(array):
+        new_array = np.copy(array)
+        should_be_zero = np.isclose(array, np.zeros(array.shape))
+        new_array[should_be_zero] = 0.0
+
+        return new_array
+
+    @staticmethod
+    def any_below_zero(array):
+        replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
+        return np.any(replaced < 0)
+        
+    @staticmethod
+    def all_below_zero(array):
+        replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
+        return np.all(replaced < 0)
+
+    @staticmethod
     def arrayPrint(array):
         """
         Desestrutura e printa o array bonitinho, separando em espaços e com arredondamento de 7 casas decimais

@@ -9,14 +9,15 @@ from exceptions import UnfeasibleError
 
 
 class AuxiliarLP:
-    def __init__(self, tableau, m_variables, n_restrictions):
+    def __init__(self, tableau):
 
         self.tableau = tableau
-        self.m_variables = m_variables
-        self.n_restrictions = n_restrictions
+        
+        self.m_variables = LinearAlgebra.get_number_of_m_variables(tableau)
+        self.n_restrictions = LinearAlgebra.get_number_of_n_restrictions(tableau)
 
         # synthetic variables
-        self.new_m_variables = m_variables + n_restrictions
+        self.new_m_variables =  self.m_variables + self.n_restrictions
 
         self.old_c = tableau[0]
 
@@ -31,16 +32,14 @@ class AuxiliarLP:
         # run simplex
         self.tableau = simplexObj.solve()
 
+        print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
+
         # if a 0 value objective function is not found then it is unfeasible
         if self.is_unfeasible():
-            raise UnfeasibleError
+            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+            raise UnfeasibleError(certificate)
 
     def phase_1(self):
-        """Checks for feasibility and returns a tableau with trivial basis
-
-        Returns:
-            _type_: _description_
-        """
 
         # run simplex to try to get to zero value objective function
         # throws exception if unfeasible

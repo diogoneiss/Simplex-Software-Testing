@@ -39,10 +39,10 @@ class SimplexRunner:
 
         self.simplex = None
 
-    def print_certificate(self):
-        firstRow = self.tableau[0]
-        certifate = firstRow[:self.n_restrictions]
-        LinearAlgebra.arrayPrint(certifate)
+    def print_certificate(self, certificate=None):
+        if certificate is None:
+            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+        LinearAlgebra.arrayPrint(certificate)
 
     def print_x_solution(self):
         x_solution = LinearAlgebra.get_solution(self.tableau)
@@ -50,22 +50,18 @@ class SimplexRunner:
         LinearAlgebra.arrayPrint(x_solutions_without_aux_variables)
 
     def get_optimal_value(self):
-        """Gets value at last column of first row, i.e, optimal value
-
-        Returns:
-            _type_: _description_
-        """
         return self.tableau[0][-1]
 
     def runSimplex(self):
         try:
             # execute phase 1
 
-            auxiliar = AuxiliarLP(self.tableau, self.m_variables, self.n_restrictions)
+            auxiliar = AuxiliarLP(self.tableau)
             tableau_with_trivial_basis = auxiliar.phase_1()
 
             # execute phase 2
             phase2 = Simplex(m=self.m_variables, n=self.n_restrictions, tableau=tableau_with_trivial_basis)
+            
             phase2.solve()
 
             self.tableau = phase2.tableau
@@ -73,25 +69,20 @@ class SimplexRunner:
             print(self.get_optimal_value())
             self.print_x_solution()
             self.print_certificate()
-            """
-            otima
-            36.0000000
-            0.0000000 3.6000000 
-            0.0000000 2.0000000 0.0000000 0.0000000 
-            """
+            return 
 
         # finish until done or unbounded
 
-        except UnboundedError:
+        except UnboundedError as Ub:
             print("ilimitada")
-            print(self.print_certificate())
+            self.print_certificate(Ub.certificate)
 
-            pass
-        except UnfeasibleError:
+            return
+        except UnfeasibleError as Uf:
             print("inviavel")
-            print(self.print_certificate())
+            self.print_certificate(Uf.certificate)
 
-            pass
+            return
 
 
 # run main

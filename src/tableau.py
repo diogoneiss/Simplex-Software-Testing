@@ -136,8 +136,12 @@ class TableauParsing:
 
         for i, row in enumerate(ab_matrix):
             b_i = row[-1]
-            if b_i < 0:
+
+            is_zero = np.isclose([b_i], [0])
+
+            if not is_zero and b_i < 0:
                 ab_matrix[i] = row * -1
+                
         return ab_matrix
 
     @staticmethod
@@ -171,15 +175,13 @@ class TableauParsing:
     @staticmethod
     def __read_c_and_ab(n_restrictions: int):
         """
-        Reads c and ab from input and fixes negative b rows
+        Reads c and ab from input
         :param n_restrictions: number of restrictions in tableau
         :return: c, ab_fixed
         """
         c, ab = TableauParsing.__read_crude_c_ab_input(n_restrictions)
 
-        positive_b_ab_matrix = TableauParsing.__fix_negative_b_restrictions(ab)
-
-        return c, positive_b_ab_matrix
+        return c, ab
 
     @staticmethod
     def __create_c_ab_tableau(c: np.ndarray, a: np.ndarray, n_restrictions: int, m: int):
@@ -208,13 +210,18 @@ class TableauParsing:
         :return: generated tableau
         """
 
-        # sanity check, there should be no negative b values(last column)
-        b_column = a.T[-1]
 
-        if np.any(b_column < 0):
-            raise Exception(f"Negative b value inputed at b column {b_column}")
 
         combined_c_ab = TableauParsing.__create_c_ab_tableau(c, a, n_restrictions, m)
+        
         full_tableau = TableauParsing.__add_operations_register_tableau(combined_c_ab, n_restrictions)
+        
+        # if b <0 we should multiply by -1
+        full_tableau = TableauParsing.__fix_negative_b_restrictions(full_tableau)
 
+        # sanity check, there should be no negative b values(last column)
+        b_column = full_tableau.T[-1]
+
+        if LinearAlgebra.any_below_zero(b_column):
+            raise Exception(f"Negative b value inputed at b column {b_column}")
         return full_tableau
