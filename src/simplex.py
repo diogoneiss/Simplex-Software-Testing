@@ -17,26 +17,27 @@ class Simplex:
             self.tableau = tableau.astype(float)
 
     def solve(self):
-
+        self.__remove_values_lower_than_tolerance()
         stop = self.isSimplexDone()
-        # print("___")
-        # matprint(self.tableau)
 
         while not stop:
             # check if unbounded
             if self.isUnbounded(self.tableau):
-               raise UnboundedError
+               certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+               raise UnboundedError(certificate)
 
-            # pivotear
+            # pivot
             row, column = self.findPivot(self.tableau, n_restrictions=self.n_restrictions)
-            # print(f"Pivoting tableau[{row}][{column}], {self.tableau[row, column]}")
             self.tableau = self.pivotTableau(self.tableau, row=row, column=column)
 
             stop = self.isSimplexDone()
 
-            # matprint(self.tableau)
-
         return self.tableau
+
+    
+    def __remove_values_lower_than_tolerance(self):
+        self.tableau = LinearAlgebra.replace_values_smaller_then_tol(self.tableau)
+        
 
     @staticmethod
     def isUnbounded(tableau: np.ndarray):
@@ -150,7 +151,8 @@ class Simplex:
                     row = j
 
         if column_i == -1:
-            raise UnfeasibleError
+            certificate = LinearAlgebra.retrive_certificate(original_tableau, n_restrictions)
+            raise UnfeasibleError(certificate)
 
         return row, column_i
 
