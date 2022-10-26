@@ -1,7 +1,9 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 from Utils.linear_algebra import LinearAlgebra
+from exceptions import UnboundedError, UnfeasibleError
 from simplex import Simplex
 from pytest import input_test_data
 
@@ -108,6 +110,7 @@ class TestSimplex:
         ]
 
         npt.assert_almost_equal(tableau, expectedTableau)
+
     def test_returns_is_unbounded(self):
         baseTableau = np.array([
             [-1, -1, -1, -4, -4, 0, 0, -1, -21],
@@ -131,3 +134,84 @@ class TestSimplex:
         result = Simplex.isUnbounded(baseTableau)
 
         npt.assert_equal(result, False)
+
+    def test_raises_unbounded_exception(self):
+        baseTableau = np.array([
+            [-1, -1, -1, -4, -4, -2, -2, -1, -21],
+            [1, 0, 0, 2, 1, 1, 0, -1, 8],
+            [0, 1, 0, 1, 2, 0, 1, -1, 8],
+            [0, 0, 1, 1, 1, 0, 0, -1, 5],
+        ])
+
+        simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
+
+        with pytest.raises(UnboundedError):
+            simplexObj.solve()
+
+    def test_raises_unbounded_exception(self):
+        baseTableau = np.array([
+            [0, 0, -1, 0, 0, 0, 0, 0],
+            [1, 0, -1, 1, 0, 1, 0, 5],
+            [0, 1, -1, 0, 1, 0, 1, 7],
+        ])
+
+        simplexObj = Simplex(m=3, n=2, tableau=baseTableau)
+
+        with pytest.raises(UnboundedError):
+            simplexObj.solve()
+
+    def test_raises_unbounded_exception_with_certificate(self):
+        baseTableau = np.array([
+            [0,  0, -1,  0,  0,  0,  0,  0],
+            [1,  0, -1,  1,  0,  1,  0,  5],
+            [0,  1, -1,  0,  1,  0,  1,  7],
+        ])
+
+        simplexObj = Simplex(m=3, n=2, tableau=baseTableau)
+
+        with pytest.raises(UnboundedError) as exc:
+            simplexObj.solve()
+
+        npt.assert_allclose(exc.value.certificate, [0, 0])
+
+    def test_raises_unfeasible_exception(self):
+        baseTableau = np.array([
+            [1, 0, -2, 2, 1, 1, 0, 1, 8],
+            [1, 0, 0, 2, 1, 1, 0, 1, 8],
+            [0, 1, 0, 1, 2, 0, 1, -1, 8],
+            [0, 0, 1, 1, 1, 0, 0, -1, 5],
+        ])
+
+        simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
+
+        with pytest.raises(UnfeasibleError):
+            simplexObj.solve()
+
+    def test_raises_unfeasible_exception(self):
+        baseTableau = np.array([
+            [1, 0, 2, 2, 1, 1, 0, 1, -2],
+            [1, 0, 0, 2, 1, 1, 0, 1, 8],
+            [0, 1, 0, 1, 2, 0, 1, -1, 8],
+            [0, 0, 1, 1, 1, 0, 0, -1, 5],
+        ])
+
+        simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
+
+        with pytest.raises(UnfeasibleError):
+            simplexObj.solve()
+
+    def test_raises_unfeasible_exception_with_certificate(self):
+        baseTableau = np.array([
+            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, -4],
+            [-1, 0,  0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
+            [0, -1,  0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
+            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+        ])
+
+        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+
+        with pytest.raises(UnfeasibleError) as exc:
+            simplexObj.solve()
+
+        npt.assert_allclose(exc.value.certificate, [1, 1, 1, 1])
