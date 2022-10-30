@@ -141,5 +141,29 @@ class TestUtilLinearAlgebra:
 
         npt.assert_allclose(basicColumns, expectedColumns)
 
-    def test_extract_feasible_columns(self):
-        assert True
+    def test_replace_values_lower_then_tol(self):
+        array = np.array(
+            [0.000000000000000000002, 0, 0, 0, 0.00000000000001, 1, 1, 1, 0.000000000045],
+        )
+
+        array_with_small_values_replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
+
+        npt.assert_allclose(array_with_small_values_replaced, [0, 0, 0, 0, 0, 1, 1, 1, 0])
+
+    def test_any_bellow_zero(self):
+        array = np.array(
+            [0.000000000000000000002, 0, 0, 0, 0.00000000000001, 1, 1, 1, 0.000000000045],
+        )
+
+        result = LinearAlgebra.any_below_zero(array)
+
+        npt.assert_equal(False, result)
+
+    def test_all_bellow_zero(self):
+        array = np.array(
+            [0.000000000000000000002, 0, 0, 0, 0.00000000000001, 1, 1, 1, 0.000000000045],
+        )
+
+        result = LinearAlgebra.all_below_zero(array)
+
+        npt.assert_equal(False, result)
