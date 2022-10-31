@@ -131,7 +131,21 @@ class TestAuxiliar:
         npt.assert_almost_equal(calculatedC, expectedTableau)
 
     def test_phase_1(self):
-        assert True
+        baseTableau = np.array([
+            [0, 0, 0, -2, -4, -8, 0, 0, 0, 0],
+            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+         ])
 
-    def test_is_unfeasible(self):
-        assert True
+        aux = AuxiliarLP(baseTableau)
+        aux.phase_1()
+
+        expectedOutput = np.array([
+            [2, 4, 8, 0, 0, 0, 2, 4, 8, 14],
+            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+        ])
+
+        npt.assert_allclose(aux.tableau, expectedOutput)

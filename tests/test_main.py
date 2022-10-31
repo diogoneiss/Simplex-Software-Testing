@@ -51,7 +51,16 @@ class TestSimplexRunner:
         assert True
 
     def test_get_optimal_value(self):
-        assert True
+        entrada = "3 3\n2 4 8 \n1 0 0 1\n0 1 0 1\n0 0 1 1"
+        sys.stdin = io.StringIO(entrada)
+
+        obj = SimplexRunner()
+
+        obj.runSimplex()
+
+        optimal_value = obj.get_optimal_value()
+
+        npt.assert_allclose(optimal_value, 14)
 
     def test_run_simplex(self):
         assert True
