@@ -21,7 +21,7 @@ class TestAuxiliar:
         m_variaveis = 2
         n_restricoes = 3
 
-        pl = AuxiliarLP(baseTableau, m_variaveis, n_restricoes)
+        pl = AuxiliarLP(baseTableau)
 
         pl._AuxiliarLP__run_auxiliar_lp()
 
@@ -48,7 +48,7 @@ class TestAuxiliar:
         m_variaveis = 2
         n_restricoes = 3
 
-        pl = AuxiliarLP(baseTableau, m_variaveis, n_restricoes)
+        pl = AuxiliarLP(baseTableau)
 
         resultC = pl._AuxiliarLP__create_synthetic_c()
 
@@ -68,7 +68,7 @@ class TestAuxiliar:
         m_variaveis = 2
         n_restricoes = 3
 
-        pl = AuxiliarLP(baseTableau, m_variaveis, n_restricoes)
+        pl = AuxiliarLP(baseTableau)
 
         cArray = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0]
 
@@ -90,7 +90,7 @@ class TestAuxiliar:
         m_variaveis = 2
         n_restricoes = 3
 
-        pl = AuxiliarLP(baseTableau, m_variaveis, n_restricoes)
+        pl = AuxiliarLP(baseTableau)
 
         tableau = pl.setup_canonical_form()
 
@@ -118,7 +118,7 @@ class TestAuxiliar:
 
         ## need to set up the old_c manually, as I'm passing a pivoted tableau
         old_c = [0, 0, 0, -3, -2, 0, 0, 0, 0]
-        pl = AuxiliarLP(baseTableau, m_variaveis, n_restricoes)
+        pl = AuxiliarLP(baseTableau)
         pl.old_c = np.array(old_c)
 
         pl._AuxiliarLP__restore_original_c()
@@ -129,6 +129,27 @@ class TestAuxiliar:
         expectedTableau = [-1, -1, -1, -7, -6, -1, -1, -1, -21]
 
         npt.assert_almost_equal(calculatedC, expectedTableau)
+
+    def test_auxiliar_lp(self):
+        baseTableau = np.array([
+            [0, 0, 0, -2, -4, -8, 0, 0, 0, 0],
+            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+        ])
+
+        aux = AuxiliarLP(baseTableau)
+
+        aux._AuxiliarLP__run_auxiliar_lp()
+
+        expectedTableau = np.array([
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
+            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+        ])
+
+        npt.assert_allclose(expectedTableau, aux.tableau)
 
     def test_phase_1(self):
         baseTableau = np.array([

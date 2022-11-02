@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import logging
 from Utils.linear_algebra import LinearAlgebra
@@ -16,18 +18,29 @@ class Simplex:
         else:
             self.tableau = tableau.astype(float)
 
-    def solve(self):
+    def solve(self, phase1=False):
         self.__remove_values_lower_than_tolerance()
         stop = self.isSimplexDone()
 
         while not stop:
             # check if unbounded
             if self.isUnbounded(self.tableau):
-               certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-               raise UnboundedError(certificate)
+                certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+                raise UnboundedError(certificate)
 
             # pivot
             row, column = self.findPivot(self.tableau, n_restrictions=self.n_restrictions)
+
+            if column == -1:
+                if phase1:
+                    if math.isclose(self.tableau[0][-1], 0):
+                        break
+                    else:
+                        certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+                        raise UnfeasibleError(certificate)
+                else:
+                    break
+
             self.tableau = self.pivotTableau(self.tableau, row=row, column=column)
 
             stop = self.isSimplexDone()
@@ -42,12 +55,12 @@ class Simplex:
     @staticmethod
     def isUnbounded(tableau: np.ndarray):
 
-        # percorre as colunas do tableau
         for column in tableau.T:
-            is_negative_array = column < 0
-            # se todos numeros forem menores que zero, é ilimitada
-            if all(is_negative_array):
-                return True
+            if column[0] < 0:
+                is_negative_array = column <= 0
+
+                if all(is_negative_array):
+                    return True
 
         return False
 
@@ -139,6 +152,9 @@ class Simplex:
         row = -1
         smallestRatio = np.inf
 
+        if column_i == -1:
+            return -1, -1
+
         # find smallest ratio (b_i/a_i), such that a_i > 0
 
         for j, a_j in enumerate(original_tableau.T[column_i]):
@@ -150,9 +166,9 @@ class Simplex:
                     smallestRatio = ratio
                     row = j
 
-        if column_i == -1:
-            certificate = LinearAlgebra.retrive_certificate(original_tableau, n_restrictions)
-            raise UnfeasibleError(certificate)
+        # if column_i == -1:
+        #     certificate = LinearAlgebra.retrive_certificate(original_tableau, n_restrictions)
+        #     raise UnfeasibleError(certificate)
 
         return row, column_i
 

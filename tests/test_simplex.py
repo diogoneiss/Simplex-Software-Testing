@@ -198,7 +198,7 @@ class TestSimplex:
         simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
 
         with pytest.raises(UnfeasibleError):
-            simplexObj.solve()
+            simplexObj.solve(phase1=True)
 
     def test_raises_unfeasible_exception_with_certificate(self):
         baseTableau = np.array([
@@ -212,6 +212,45 @@ class TestSimplex:
         simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
 
         with pytest.raises(UnfeasibleError) as exc:
-            simplexObj.solve()
+            simplexObj.solve(phase1=True)
 
         npt.assert_allclose(exc.value.certificate, [1, 1, 1, 1])
+
+    def test_is_simplex_not_done(self):
+        baseTableau = np.array([
+            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, -4],
+            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
+            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
+            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+        ])
+
+        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+
+        npt.assert_equal(simplexObj.isSimplexDone(), False)
+
+    def test_is_simplex_not_done(self):
+        baseTableau = np.array([
+            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 4],
+            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1],
+            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
+            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+        ])
+
+        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+
+        npt.assert_equal(simplexObj.isSimplexDone(), False)
+
+    def test_is_simplex_done(self):
+        baseTableau = np.array([
+            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 4],
+            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
+            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
+            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+        ])
+
+        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+
+        npt.assert_equal(simplexObj.isSimplexDone(), True)

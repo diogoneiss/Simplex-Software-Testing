@@ -30,14 +30,14 @@ class AuxiliarLP:
         simplexObj = Simplex(m=self.new_m_variables, n=self.n_restrictions, tableau=canonical_tableau)
 
         # run simplex
-        self.tableau = simplexObj.solve()
+        self.tableau = simplexObj.solve(phase1=True)
 
         print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
 
         # if a 0 value objective function is not found then it is unfeasible
-        if self.is_unfeasible():
-            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-            raise UnfeasibleError(certificate)
+        # if self.is_unfeasible():
+        #     certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+        #     raise UnfeasibleError(certificate)
 
     def phase_1(self):
 
