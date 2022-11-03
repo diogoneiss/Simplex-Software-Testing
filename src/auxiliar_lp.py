@@ -9,35 +9,44 @@ from exceptions import UnfeasibleError
 
 
 class AuxiliarLP:
-    def __init__(self, tableau):
+    def __init__(self, tableau: np.ndarray):
+
+        # sanity check
+        if isinstance(tableau, list):
+            logging.warning("List passed to auxiliar_lp instead of numpy array", tableau)
+            tableau = np.array(tableau)
 
         self.tableau = tableau
-        
+
         self.m_variables = LinearAlgebra.get_number_of_m_variables(tableau)
         self.n_restrictions = LinearAlgebra.get_number_of_n_restrictions(tableau)
 
-        # synthetic variables
-        self.new_m_variables =  self.m_variables + self.n_restrictions
+        # synthetic variables count
+        self.slack_variables_added = 0
+
+        # synthetic columns
+        self.auxiliary_columns = []
 
         self.old_c = tableau[0]
 
     def __run_auxiliar_lp(self):
 
         # put sythetic columns in canonical form
-        canonical_tableau = self.setup_canonical_form()
+        canonical_tableau = self.setup_auxiliar_problem()
 
         # create simplex object with the new tableau and variables
-        simplexObj = Simplex(m=self.new_m_variables, n=self.n_restrictions, tableau=canonical_tableau)
+        n = LinearAlgebra.get_number_of_n_restrictions(canonical_tableau)
+        m = LinearAlgebra.get_number_of_m_variables(canonical_tableau)
 
         # run simplex
-        self.tableau = simplexObj.solve(phase1=True)
+        self.tableau = Simplex(m=m, n=n, tableau=canonical_tableau).solve(phase1=True)
 
         print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
 
         # if a 0 value objective function is not found then it is unfeasible
-        # if self.is_unfeasible():
-        #     certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-        #     raise UnfeasibleError(certificate)
+        if self.is_unfeasible():
+            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+            raise UnfeasibleError(certificate)
 
     def phase_1(self):
 
@@ -50,9 +59,10 @@ class AuxiliarLP:
 
         SIMULATE_AUXILIAR_OPERATIONS_IN_C = False
 
-        # remove synthetic columns (2*n+m to 3n+m) and restore c
+        # remove synthetic columns (2*n+m to 2*n+m+k, such that k is the new columns count ) and restore c
         start_synthetic = self.m_variables + 2 * self.n_restrictions
-        self.tableau = np.delete(self.tableau, np.s_[start_synthetic: start_synthetic + self.n_restrictions], axis=1)
+        self.tableau = np.delete(self.tableau, np.s_[start_synthetic: start_synthetic + self.slack_variables_added],
+                                 axis=1)
 
         if SIMULATE_AUXILIAR_OPERATIONS_IN_C:
             self.__restore_original_c()
@@ -64,57 +74,90 @@ class AuxiliarLP:
 
         return self.tableau
 
-    def __create_synthetic_c(self):
-        # tableau tem m (vero) + n (variaveis) + m (folgas) + 1 de largura
-        # vamos inserir uma coluna identidade e zerar o c
+    def __change_objective_function(self):
+        # tableau tem m (vero) + n (variaveis) + m (folgas, opcionais) + 1 de largura
 
-        zeroC = np.zeros(self.m_variables + 2 * self.n_restrictions)
+        # here we have vero, variables, slack, new variables and b. They all should be zero
+        new_c = np.zeros(self.tableau.shape[1] + self.slack_variables_added)
 
-        auxiliarC = np.ones(self.n_restrictions)
+        # make the obj value for auxiliary columns 1
+        for c_i in self.auxiliary_columns:
+            new_c[c_i] = 1
 
-        # finalizar formato (0, 0, 0... 1, 1 ... 0)
+        return new_c
 
-        tmpC = np.hstack((zeroC, auxiliarC))
+    def __merge_new_c_and_new_restrictions(self, new_ab, new_c):
+        full_tableau = np.vstack((new_c, new_ab))
 
-        fullC = np.hstack((tmpC, [0]))
+        return full_tableau
 
-        return fullC
-
-    def __add_synthetic_restrictions(self, newC):
+    def __add_new_synthetic_restrictions(self):
 
         # remove first row from tableau
         abMatrix = np.delete(self.tableau, 0, 0)
 
-        # create n_restrictions * n_restrictions identity
-        identityRestrictions = np.identity(self.n_restrictions)
+        if self.slack_variables_added > 0:
+            # create n_restrictions * new_m_variables identity
+            identityRestrictions = np.zeros((self.n_restrictions, self.slack_variables_added))
 
-        # insert just before b
-        position = self.m_variables + 2 * self.n_restrictions
+            # index of last column, before b
+            offset = self.tableau.shape[1] - 1
 
-        tableauAb = np.insert(abMatrix, position, identityRestrictions, axis=1)
+            # insert in basis
+            for i, index in enumerate(self.auxiliary_columns):
+                identityRestrictions[index - offset][i] = 1
 
-        fullTableau = np.vstack((newC, tableauAb))
+            abMatrix = np.insert(abMatrix, offset, identityRestrictions, axis=1)
 
-        return fullTableau
+        return abMatrix
 
-    def setup_canonical_form(self):
-        newC = self.__create_synthetic_c()
-        newTableau = self.__add_synthetic_restrictions(newC)
+    def setup_auxiliar_problem(self):
+
+        # check to see if we need to insert synthetic variables, will always do nothing in Ax<=b problem
+        self.__change_to_auxiliary_problem()
+
+        # use the linear algebra find basis method
         start = self.m_variables + 2 * self.n_restrictions
+        new_tableau = self.tableau.copy()
 
-        # pivotear cada coluna da base trivial para colocar o 0 zero
-        for i in range(0, self.n_restrictions):
-            newTableau = Simplex.pivotTableau(newTableau, start + i, i + 1)
+        # pivotear cada coluna da base auxiliar para colocar o c_i 0 zero
+        for i, col in enumerate(self.auxiliary_columns):
+            variable_index = i + 1
+            new_tableau = Simplex.pivotTableau(new_tableau, col, variable_index)
 
-        return newTableau
+        return new_tableau
+
+    def __change_to_auxiliary_problem(self):
+        slack_start = self.m_variables + self.n_restrictions
+
+        # if the tableau has additional columns with n_restrictions width, we have a full identity added
+        # this should ALWAYS be true
+        if self.tableau.shape[1] - 1 == slack_start + self.n_restrictions:
+            print("Full identity found")
+            self.auxiliary_columns = list(range(slack_start, slack_start + self.n_restrictions))
+            self.slack_variables_added = 0
+        else:
+            # check missing variables
+            # trivial_basis = LinearAlgebra.findBasicColumns(self.tableau, drop_c=True, get_rightmost=True)
+            # I will not do this as it will never be needed, but if needed
+            # this behaviour can be achived by checking which variables do not have a
+            # slack added (index of the basis is below the slack start
+            # and add then, remebering to flag this addition in the object properties
+            raise NotImplemented("We do not have aux variable developed")
+
+        new_c = self.__change_objective_function()
+        new_ab = self.__add_new_synthetic_restrictions()
+        self.old_c = self.tableau.T[0]
+        self.tableau = self.__merge_new_c_and_new_restrictions(new_ab, new_c)
 
     def __is_synthetic_variable(self, index):
-        return index >= (self.m_variables + 2 * self.n_restrictions)
+        return index in self.auxiliary_columns
 
     def is_unfeasible(self):
 
         result = self.tableau[0][-1]
-
+        print("Unfeasible test")
+        LinearAlgebra.matprint(self.tableau)
         # se o resultado for 0, é otimo.
         # TODO: Ver caso do livro do Thie, que o Scipy resolve
         if math.isclose(result, 0):

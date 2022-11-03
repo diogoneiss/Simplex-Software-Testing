@@ -141,7 +141,7 @@ class TableauParsing:
 
             if not is_zero and b_i < 0:
                 ab_matrix[i] = row * -1
-                
+
         return ab_matrix
 
     @staticmethod
@@ -210,12 +210,10 @@ class TableauParsing:
         :return: generated tableau
         """
 
-
-
         combined_c_ab = TableauParsing.__create_c_ab_tableau(c, a, n_restrictions, m)
-        
+
         full_tableau = TableauParsing.__add_operations_register_tableau(combined_c_ab, n_restrictions)
-        
+
         # if b <0 we should multiply by -1
         full_tableau = TableauParsing.__fix_negative_b_restrictions(full_tableau)
 

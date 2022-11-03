@@ -141,7 +141,7 @@ class LinearAlgebra:
             return tableau[:, n_restrictions:]
 
     @staticmethod
-    def findBasicColumns(tableau, drop_c=False, drop_vero=True, drop_b=True):
+    def findBasicColumns(tableau, drop_c=False, drop_vero=True, drop_b=True, get_rightmost=False):
         """ Gets the column indexes of the basic columns in the tableau, that is, the columns with one 1 and all zeros
         Each index represents a restriction and the value represents the variable index that is in the basis
 
@@ -178,9 +178,13 @@ class LinearAlgebra:
                     position -= 1
 
                 if basicIndexes[position] != -1:
-                    # matprint(tableau)
-                    logging.debug(
-                        f"{idx}th column will not enter, already found basic row for {position}th restriction with column  X_{basicIndexes[position]}")
+                    # case where we find another valid basis in the end, most likely a slack column
+                    if get_rightmost:
+                        basicIndexes[position] = idx
+                    else:
+                        # matprint(tableau)
+                        logging.debug(
+                            f"{idx}th column will not enter, already found basic row for {position}th restriction with column  X_{basicIndexes[position]}")
                 else:
                     basicIndexes[position] = idx
 

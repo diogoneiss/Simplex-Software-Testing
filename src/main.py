@@ -56,8 +56,7 @@ class SimplexRunner:
         try:
             # execute phase 1
 
-            auxiliar = AuxiliarLP(self.tableau)
-            tableau_with_trivial_basis = auxiliar.phase_1()
+            tableau_with_trivial_basis = AuxiliarLP(self.tableau).phase_1()
 
             # execute phase 2
             phase2 = Simplex(m=self.m_variables, n=self.n_restrictions, tableau=tableau_with_trivial_basis)

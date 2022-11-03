@@ -12,20 +12,19 @@ from Utils.linear_algebra import LinearAlgebra
 class TestAuxiliar:
 
     def test_auxiliar_lp_simplex(self):
-        baseTableau = [
+        baseTableau = np.array([
             [0, 0, 0, -3, -2, 0, 0, 0, 0],
             [1, 0, 0, 2, 1, 1, 0, 0, 8],
             [0, 1, 0, 1, 2, 0, 1, 0, 8],
             [0, 0, 1, 1, 1, 0, 0, 1, 5],
-        ]
+        ])
         m_variaveis = 2
         n_restricoes = 3
 
         pl = AuxiliarLP(baseTableau)
 
-        pl._AuxiliarLP__run_auxiliar_lp()
+        result_tableau = pl.phase_1()
 
-        result_tableau = pl.tableau
 
         LinearAlgebra.matprint(result_tableau)
 
@@ -38,32 +37,30 @@ class TestAuxiliar:
         npt.assert_allclose(result_tableau, expectedTableau)
 
     def test_auxiliar_tableau(self):
-        baseTableau = [
+        baseTableau = np.array([
             [0, 0, 0, -3, -2, 0, 0, 0, 0],
             [1, 0, 0, 2, 1, 1, 0, 0, 8],
             [0, 1, 0, 1, 2, 0, 1, 0, 8],
             [0, 0, 1, 1, 1, 0, 0, 1, 5],
-        ]
-
-        m_variaveis = 2
-        n_restricoes = 3
+        ])
 
         pl = AuxiliarLP(baseTableau)
+        pl.setup_auxiliar_problem()
 
-        resultC = pl._AuxiliarLP__create_synthetic_c()
+        resultC = pl.tableau[0]
 
         # largura 2m + n + 1
-        expectedC = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0]
+        expectedC = [0, 0, 0, 0, 0, 1, 1, 1, 0]
 
         npt.assert_allclose(resultC, expectedC)
 
     def test_SyntheticRestrictionAddition(self):
-        baseTableau = [
+        baseTableau = np.array([
             [0, 0, 0, -3, -2, 0, 0, 0, 0],
             [1, 0, 0, 2, 1, 1, 0, 0, 8],
             [0, 1, 0, 1, 2, 0, 1, 0, 8],
             [0, 0, 1, 1, 1, 0, 0, 1, 5],
-        ]
+        ])
 
         m_variaveis = 2
         n_restricoes = 3
@@ -82,25 +79,25 @@ class TestAuxiliar:
         npt.assert_almost_equal(tableau, expectedTableau)
 
     def test_canonical_form_creation(self):
-        baseTableau = [[0, 0, 0, -3, -2, 0, 0, 0, 0],
-                       [1, 0, 0, 2, 1, 1, 0, 0,
-                        8], [0, 1, 0, 1, 2, 0, 1, 0, 8],
-                       [0, 0, 1, 1, 1, 0, 0, 1, 5]]
+        baseTableau = np.array([[0, 0, 0, -3, -2, 0, 0, 0, 0],
+                                [1, 0, 0, 2, 1, 1, 0, 0,
+                                 8], [0, 1, 0, 1, 2, 0, 1, 0, 8],
+                                [0, 0, 1, 1, 1, 0, 0, 1, 5]])
 
         m_variaveis = 2
         n_restricoes = 3
 
         pl = AuxiliarLP(baseTableau)
 
-        tableau = pl.setup_canonical_form()
+        tableau = pl.setup_auxiliar_problem()
 
         LinearAlgebra.matprint(tableau)
 
         expectedTableau = [
-            [-1, -1, -1, -4, -4, -1, -1, -1, 0, 0, 0, -21],
-            [1, 0, 0, 2, 1, 1, 0, 0, 1, 0, 0, 8],
-            [0, 1, 0, 1, 2, 0, 1, 0, 0, 1, 0, 8],
-            [0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 5],
+            [-1, -1, -1, -4, -4, 0, 0, 0, -21],
+            [1, 0, 0, 2, 1, 1, 0, 0, 8],
+            [0, 1, 0, 1, 2, 0, 1, 0, 8],
+            [0, 0, 1, 1, 1, 0, 0, 1, 5],
         ]
 
         npt.assert_almost_equal(tableau, expectedTableau)
@@ -121,16 +118,14 @@ class TestAuxiliar:
         pl = AuxiliarLP(baseTableau)
         pl.old_c = np.array(old_c)
 
-        pl._AuxiliarLP__restore_original_c()
+        tableau_final = pl.phase_1()
 
-        tableau = pl.tableau
-
-        calculatedC = tableau[0]
+        calculatedC = tableau_final[0]
         expectedTableau = [-1, -1, -1, -7, -6, -1, -1, -1, -21]
 
         npt.assert_almost_equal(calculatedC, expectedTableau)
 
-    def test_auxiliar_lp(self):
+    def test_auxiliar_lp_canonical_form(self):
         baseTableau = np.array([
             [0, 0, 0, -2, -4, -8, 0, 0, 0, 0],
             [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
@@ -140,16 +135,16 @@ class TestAuxiliar:
 
         aux = AuxiliarLP(baseTableau)
 
-        aux._AuxiliarLP__run_auxiliar_lp()
+        tableau = aux.setup_auxiliar_problem()
 
         expectedTableau = np.array([
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
-            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
-            [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-            [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
+            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
         ])
 
-        npt.assert_allclose(expectedTableau, aux.tableau)
+        npt.assert_allclose(tableau, expectedTableau)
 
     def test_phase_1(self):
         baseTableau = np.array([
@@ -157,16 +152,16 @@ class TestAuxiliar:
             [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
             [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
             [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
-         ])
+        ])
 
         aux = AuxiliarLP(baseTableau)
         aux.phase_1()
 
         expectedOutput = np.array([
-            [2, 4, 8, 0, 0, 0, 2, 4, 8, 14],
-            [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
-            [0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-            [0, 0, 1, 0, 0, 1, 0, 0, 1, 1]
+            [2, 4, 8, 2, 4, 8, 14],
+            [1, 0, 0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 1, 0, 1],
+            [0, 0, 1, 0, 0, 1, 1]
         ])
 
         npt.assert_allclose(aux.tableau, expectedOutput)
