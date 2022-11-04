@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+from auxiliar_lp import AuxiliarLP
 
 from Utils.linear_algebra import LinearAlgebra
 from exceptions import UnboundedError, UnfeasibleError
@@ -164,7 +165,7 @@ class TestSimplex:
         baseTableau = np.array([
             [0,  0, -1,  0,  0,  0,  0,  0],
             [1,  0, -1,  1,  0,  1,  0,  5],
-            [0,  1, -1,  0,  1,  0,  1,  7],
+            [0, 1, -1, 0, 1, 0, 1, 7],
         ])
 
         simplexObj = Simplex(m=3, n=2, tableau=baseTableau)
@@ -174,18 +175,14 @@ class TestSimplex:
 
         npt.assert_allclose(exc.value.certificate, [0, 0])
 
-    def test_raises_unfeasible_exception(self):
-        baseTableau = np.array([
-            [1, 0, -2, 2, 1, 1, 0, 1, 8],
-            [1, 0, 0, 2, 1, 1, 0, 1, 8],
-            [0, 1, 0, 1, 2, 0, 1, -1, 8],
-            [0, 0, 1, 1, 1, 0, 0, -1, 5],
-        ])
+    def test_raises_unfeasible_exception_message(self):
+        baseTableau = np.array([])
+        # ^ insert trivial unfeasible tableau here
 
-        simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
+        pl = AuxiliarLP(baseTableau)
 
         with pytest.raises(UnfeasibleError):
-            simplexObj.solve()
+            pl.phase_1()
 
     def test_raises_unfeasible_exception(self):
         baseTableau = np.array([

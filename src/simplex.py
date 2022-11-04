@@ -20,9 +20,21 @@ class Simplex:
 
     def solve(self, phase1=False):
         self.__remove_values_lower_than_tolerance()
-        stop = self.isSimplexDone()
 
+        # sanity check, there should be no negative b values(last column)
+        b_column = self.tableau[1:, -1]
+
+        if LinearAlgebra.any_below_zero(b_column):
+            raise Exception(f"Negative b value inputed at b column {b_column}")
+
+        stop = self.isSimplexDone()
+        counter = 1
         while not stop:
+            # remove sporadic small values
+            counter += 1
+            if counter % 10 == 0:
+                self.__remove_values_lower_than_tolerance()
+
             # check if unbounded
             if self.isUnbounded(self.tableau):
                 certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
@@ -31,19 +43,29 @@ class Simplex:
             # pivot
             row, column = self.findPivot(self.tableau, n_restrictions=self.n_restrictions)
 
-            if column == -1:
-                if phase1:
-                    if math.isclose(self.tableau[0][-1], 0):
-                        break
-                    else:
-                        certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-                        raise UnfeasibleError(certificate)
-                else:
-                    break
+            # if column == -1:
+            #     if phase1:
+            #         if math.isclose(self.tableau[0][-1], 0):
+            #             break
+            #         else:
+            #             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+            #             raise UnfeasibleError(certificate)
+            #     else:
+            #         break
+
+            if column == -1 or row == -1:
+                break
 
             self.tableau = self.pivotTableau(self.tableau, row=row, column=column)
 
             stop = self.isSimplexDone()
+
+        obj_value = self.tableau[0][-1]
+
+        # this should almost never happen, as the unfeasible check is done in auxiliar problem
+        if LinearAlgebra.smaller_than_zero(obj_value):
+            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+            raise UnfeasibleError(certificate)
 
         return self.tableau
 
@@ -91,14 +113,17 @@ class Simplex:
         Returns:
             Bool: Se ele já acabou.
         """
+        start = self.n_restrictions
+        end = -1
+        c_slice = self.tableau[0][start:end]
 
-        for c in self.tableau[0]:
-            if c < 0:
-                return False
+        if LinearAlgebra.any_below_zero(c_slice):
+            return False
 
-        for b in self.tableau[:, -1]:
-            if b < 0:
-                return False
+        # retirei pro caso de termos
+        # for b in self.tableau[:, -1]:
+        #    if b < 0:
+        #        return False
 
         return True
 

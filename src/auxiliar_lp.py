@@ -32,14 +32,15 @@ class AuxiliarLP:
     def __run_auxiliar_lp(self):
 
         # put sythetic columns in canonical form
-        canonical_tableau = self.setup_auxiliar_problem()
+        canonical_tableau = self.pre_solve_auxiliar_problem()
 
         # create simplex object with the new tableau and variables
         n = LinearAlgebra.get_number_of_n_restrictions(canonical_tableau)
         m = LinearAlgebra.get_number_of_m_variables(canonical_tableau)
 
         # run simplex
-        self.tableau = Simplex(m=m, n=n, tableau=canonical_tableau).solve(phase1=True)
+        runner = Simplex(m=m, n=n, tableau=canonical_tableau)
+        self.tableau = runner.solve(phase1=True)
 
         print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
 
@@ -48,29 +49,25 @@ class AuxiliarLP:
             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
             raise UnfeasibleError(certificate)
 
-    def phase_1(self):
+    def phase_1(self, return_in_canonical=True, simulate_auxiliar_operations_in_c=False):
 
         # run simplex to try to get to zero value objective function
         # throws exception if unfeasible
         self.__run_auxiliar_lp()
 
-        new_c = self.tableau[0]
-        old_c = self.old_c
-
-        SIMULATE_AUXILIAR_OPERATIONS_IN_C = False
-
-        # remove synthetic columns (2*n+m to 2*n+m+k, such that k is the new columns count ) and restore c
-        start_synthetic = self.m_variables + 2 * self.n_restrictions
+        # synthetic are in the last columns, except for the last one, which is b
+        start_synthetic = self.tableau.shape[1] - self.slack_variables_added - 1
         self.tableau = np.delete(self.tableau, np.s_[start_synthetic: start_synthetic + self.slack_variables_added],
                                  axis=1)
 
-        if SIMULATE_AUXILIAR_OPERATIONS_IN_C:
+        if simulate_auxiliar_operations_in_c:
             self.__restore_original_c()
         else:
             self.tableau[0] = self.old_c
 
         # after c is reinserted we need to redo the canonical form (make the basis columns canonical)
-        self.tableau = Simplex.putInCanonicalForm(self.tableau)
+        if return_in_canonical:
+            self.tableau = Simplex.putInCanonicalForm(self.tableau)
 
         return self.tableau
 
@@ -80,78 +77,69 @@ class AuxiliarLP:
         # here we have vero, variables, slack, new variables and b. They all should be zero
         new_c = np.zeros(self.tableau.shape[1] + self.slack_variables_added)
 
-        # make the obj value for auxiliary columns 1
-        for c_i in self.auxiliary_columns:
+        # make the obj value for synthetic columns 1
+        slack_start = self.tableau.shape[1] - 1
+        columns = range(slack_start, slack_start + self.slack_variables_added)
+
+        for c_i in columns:
             new_c[c_i] = 1
 
         return new_c
 
-    def __merge_new_c_and_new_restrictions(self, new_ab, new_c):
-        full_tableau = np.vstack((new_c, new_ab))
-
-        return full_tableau
-
-    def __add_new_synthetic_restrictions(self):
+    def __change_restrictions_with_new_variables(self):
 
         # remove first row from tableau
         abMatrix = np.delete(self.tableau, 0, 0)
 
-        if self.slack_variables_added > 0:
-            # create n_restrictions * new_m_variables identity
-            identityRestrictions = np.zeros((self.n_restrictions, self.slack_variables_added))
+        # create n_restrictions * slack_variables_added zero, which will be square im my current implementation
+        identityRestrictions = np.zeros((self.n_restrictions, self.slack_variables_added))
 
-            # index of last column, before b
-            offset = self.tableau.shape[1] - 1
+        # index of last column, before b
+        offset = self.tableau.shape[1] - 1
+        self.auxiliary_columns = list(range(offset, offset + self.slack_variables_added))
 
-            # insert in basis
-            for i, index in enumerate(self.auxiliary_columns):
-                identityRestrictions[index - offset][i] = 1
+        abMatrix = np.insert(abMatrix, offset, identityRestrictions, axis=1)
 
-            abMatrix = np.insert(abMatrix, offset, identityRestrictions, axis=1)
+        # insert in basis. I'm doing it this way as we may not need entire identity, just the desired columns and indexes
+        for row_index, column_index in enumerate(self.auxiliary_columns):
+            if column_index != -1:
+                abMatrix[row_index][column_index] = 1
 
         return abMatrix
 
-    def setup_auxiliar_problem(self):
+    def pre_solve_auxiliar_problem(self):
 
-        # check to see if we need to insert synthetic variables, will always do nothing in Ax<=b problem
-        self.__change_to_auxiliary_problem()
+        # TODO: Multiply by *1 here, not in matrix input
+        self.tableau = self.__fix_negative_b_restrictions()
 
-        # use the linear algebra find basis method
-        start = self.m_variables + 2 * self.n_restrictions
-        new_tableau = self.tableau.copy()
+        # check to see if we need to insert synthetic variables, will almost never in Ax<=b problem
+        new_tableau = self.__add_variables_to_auxiliary_problem().copy()
 
         # pivotear cada coluna da base auxiliar para colocar o c_i 0 zero
         for i, col in enumerate(self.auxiliary_columns):
+            if col == -1:
+                continue
             variable_index = i + 1
             new_tableau = Simplex.pivotTableau(new_tableau, col, variable_index)
 
         return new_tableau
 
-    def __change_to_auxiliary_problem(self):
-        slack_start = self.m_variables + self.n_restrictions
+    def __add_variables_to_auxiliary_problem(self):
 
-        # if the tableau has additional columns with n_restrictions width, we have a full identity added
-        # this should ALWAYS be true
-        if self.tableau.shape[1] - 1 == slack_start + self.n_restrictions:
-            print("Full identity found")
-            self.auxiliary_columns = list(range(slack_start, slack_start + self.n_restrictions))
-            self.slack_variables_added = 0
-        else:
-            # check missing variables
-            # trivial_basis = LinearAlgebra.findBasicColumns(self.tableau, drop_c=True, get_rightmost=True)
-            # I will not do this as it will never be needed, but if needed
-            # this behaviour can be achived by checking which variables do not have a
-            # slack added (index of the basis is below the slack start
-            # and add then, remebering to flag this addition in the object properties
-            raise NotImplemented("We do not have aux variable developed")
+        self.slack_variables_added = self.n_restrictions
+
+        # I will not do this as i'm adding a full identity, but we could be more efficient
+        # this behaviour can be achived by checking which variables do not have a
+        # slack added (index of the basis is below the slack start
+        # and add then, remebering to flag this addition in the object properties
+        # trivial_basis = LinearAlgebra.findBasicColumns(self.tableau, drop_c=True, get_rightmost=True)
+        # check missing identities and perform auxiliary on them...
 
         new_c = self.__change_objective_function()
-        new_ab = self.__add_new_synthetic_restrictions()
-        self.old_c = self.tableau.T[0]
-        self.tableau = self.__merge_new_c_and_new_restrictions(new_ab, new_c)
-
-    def __is_synthetic_variable(self, index):
-        return index in self.auxiliary_columns
+        new_ab = self.__change_restrictions_with_new_variables()
+        self.old_c = self.tableau[0]
+        stacked_tableau = np.vstack((new_c, new_ab))
+        return stacked_tableau
 
     def is_unfeasible(self):
 
@@ -191,3 +179,25 @@ class AuxiliarLP:
             originalC += (value * operationRow)
 
         self.tableau[0] = originalC
+
+    def __is_synthetic_variable(self, x_index):
+        return x_index in self.auxiliary_columns
+
+    def __fix_negative_b_restrictions(self):
+        """
+        Fixes negative b rows, as we are not using dual simplex method
+        :return: modified ab_matrix with only positive b values
+        """
+        ab_matrix = self.tableau.copy()
+
+        for i in range(1, len(ab_matrix)):
+
+            row = ab_matrix[i]
+            b_i = row[-1]
+
+            is_zero = np.isclose([b_i], [0])
+
+            if not is_zero and b_i < 0:
+                ab_matrix[i] = row * -1
+
+        return ab_matrix

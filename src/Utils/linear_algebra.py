@@ -22,11 +22,18 @@ class LinearAlgebra:
     def any_below_zero(array):
         replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
         return np.any(replaced < 0)
-        
+
     @staticmethod
     def all_below_zero(array):
         replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
         return np.all(replaced < 0)
+
+    @staticmethod
+    def smaller_than_zero(number: float):
+
+        array = np.array([number])
+        # fixes numeric precision
+        return LinearAlgebra.any_below_zero(array)
 
     @staticmethod
     def arrayPrint(array):
