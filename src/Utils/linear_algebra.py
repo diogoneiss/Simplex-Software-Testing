@@ -9,12 +9,12 @@ class LinearAlgebra:
         firstRow = tableau[0]
         return firstRow[:n_restrictions]
 
-
     @staticmethod
     def replace_values_smaller_then_tol(array):
+
         new_array = np.copy(array)
         should_be_zero = np.isclose(array, np.zeros(array.shape))
-        new_array[should_be_zero] = 0.0
+        new_array[should_be_zero] = 0
 
         return new_array
 
@@ -36,6 +36,13 @@ class LinearAlgebra:
         return LinearAlgebra.any_below_zero(array)
 
     @staticmethod
+    def equal_to_zero(number: float):
+        array = np.array([number])
+        # fixes numeric precision
+        replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
+        return np.any(replaced == 0)
+
+    @staticmethod
     def arrayPrint(array):
         """
         Desestrutura e printa o array bonitinho, separando em espaços e com arredondamento de 7 casas decimais
@@ -45,10 +52,16 @@ class LinearAlgebra:
     @staticmethod
     def matprint(mat: np.ndarray, fmt="g"):
         """
-        Printa uma matriz bonitinha, com o formato tabular
+        Pretty print a numpy matrix, ie, two dimensional array
         """
         if isinstance(mat, list):
             mat = np.array(mat)
+
+        # if its one dimensional, print it as a vector using the arrayPrint function
+        if len(mat.shape) == 1:
+            LinearAlgebra.arrayPrint(mat)
+            return
+
         col_maxes = [max([len(("{:" + fmt + "}").format(x))
                           for x in col]) for col in mat.T]
         for x in mat:
@@ -107,10 +120,10 @@ class LinearAlgebra:
             tableau = np.array(tableau)
 
         n_restrictions = LinearAlgebra.get_number_of_n_restrictions(tableau)
+        x_width = LinearAlgebra.get_number_of_m_variables(tableau) + n_restrictions
 
         cleaned_tableau = LinearAlgebra.drop_vero(tableau, n_restrictions)
 
-        x_width = LinearAlgebra.get_number_of_m_variables(cleaned_tableau, has_vero=False) + n_restrictions
 
         basic_columns = LinearAlgebra.findBasicColumns(cleaned_tableau, drop_vero=False, drop_b=True)
 
@@ -157,20 +170,23 @@ class LinearAlgebra:
         n_restrictions = LinearAlgebra.get_number_of_n_restrictions(tableau)
 
         basicIndexes = np.full(n_restrictions, -1)
-
+        row_offset = 0
+        column_offset = 0
         if drop_c:
+            row_offset += 1
             tableau = np.delete(tableau, 0, axis=0)
+        if drop_vero:
+            column_offset += n_restrictions
+            tableau = np.delete(tableau, np.s_[0: n_restrictions], axis=1)
+        if drop_b:
+            tableau = np.delete(tableau, -1, axis=1)
 
         for idx, column in enumerate(tableau.T):
             # skip operations register and b column if desired
-            if drop_vero and idx < n_restrictions:
-                continue
-            if drop_b and idx == len(tableau.T) - 1:
-                continue
 
-            # i removed the and column[0] == 0 check
-            is_basis = np.count_nonzero(column) == 1
+            is_basis = np.count_nonzero(column) == 1 and np.sum(column) == 1
 
+            # if c was not dropped, we need to check the canonical form ( c_i == 0)
             if not drop_c:
                 is_basis = is_basis and column[0] == 0
 
@@ -178,7 +194,7 @@ class LinearAlgebra:
 
                 # finds the index of the 1 in the column
                 # this is the b value and idx is the active X_idx
-                position = np.where(column == 1)[0][0]
+                position = column.tolist().index(1)
 
                 # if c row is still present we need to decrease the position value
                 if not drop_c:
@@ -187,12 +203,12 @@ class LinearAlgebra:
                 if basicIndexes[position] != -1:
                     # case where we find another valid basis in the end, most likely a slack column
                     if get_rightmost:
-                        basicIndexes[position] = idx
+                        basicIndexes[position] = idx + column_offset
                     else:
                         # matprint(tableau)
                         logging.debug(
                             f"{idx}th column will not enter, already found basic row for {position}th restriction with column  X_{basicIndexes[position]}")
                 else:
-                    basicIndexes[position] = idx
+                    basicIndexes[position] = idx + column_offset
 
         return basicIndexes

@@ -32,8 +32,7 @@ class Simplex:
         while not stop:
             # remove sporadic small values
             counter += 1
-            if counter % 10 == 0:
-                self.__remove_values_lower_than_tolerance()
+
 
             # check if unbounded
             if self.isUnbounded(self.tableau):
@@ -57,6 +56,7 @@ class Simplex:
                 break
 
             self.tableau = self.pivotTableau(self.tableau, row=row, column=column)
+            self.__remove_values_lower_than_tolerance()
 
             stop = self.isSimplexDone()
 
@@ -69,10 +69,8 @@ class Simplex:
 
         return self.tableau
 
-    
     def __remove_values_lower_than_tolerance(self):
         self.tableau = LinearAlgebra.replace_values_smaller_then_tol(self.tableau)
-        
 
     @staticmethod
     def isUnbounded(tableau: np.ndarray):

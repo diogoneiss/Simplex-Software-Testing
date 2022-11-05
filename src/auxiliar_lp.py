@@ -144,12 +144,10 @@ class AuxiliarLP:
     def is_unfeasible(self):
 
         result = self.tableau[0][-1]
-        print("Unfeasible test")
-        LinearAlgebra.matprint(self.tableau)
         # se o resultado for 0, é otimo.
         # TODO: Ver caso do livro do Thie, que o Scipy resolve
-        if math.isclose(result, 0):
-            basic_variables = LinearAlgebra.findBasicColumns(self.tableau, self.n_restrictions, True)
+        if LinearAlgebra.equal_to_zero(result):
+            basic_variables = LinearAlgebra.findBasicColumns(self.tableau, drop_c=True)
             logging.debug("basic_variables", basic_variables)
 
             for i, x_index in enumerate(basic_variables):
