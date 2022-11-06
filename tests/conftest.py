@@ -4,22 +4,24 @@ from pathlib import Path
 from pytest_cases import fixture
 
 import sys
-# ADD_TO_SYSPATH = False
-#
-# # I dont know if this is needed
-# # tried and had no effect
-# if ADD_TO_SYSPATH:
-#
-#     print("\nEntering conftest.py (first file before tests run) ")
-#     PROJECT_DIR = Path(__file__).resolve().parents[1] / "src"
-#     print("Project dir: ", PROJECT_DIR)
-#
-#     sys.path.append( str(PROJECT_DIR))
-#     print("sys.path: ")
-#     print(sys.path)
-#     print("____")
 
-from src.Utils.read_json import inject_test_data
+ADD_TO_SYSPATH = True
+
+# I dont know if this is needed
+# tried and had no effect
+if ADD_TO_SYSPATH:
+    print("\nEntering conftest.py (first file before tests run) ")
+    PROJECT_DIR = Path(__file__).resolve().parents[1] / "src"
+    print("Project dir: ", PROJECT_DIR)
+
+    sys.path.append(str(PROJECT_DIR))
+    sys.path.append(str(PROJECT_DIR / "Utils"))
+    print("sys.path: ")
+    print(sys.path)
+    print("____")
+
+# delayed import to garantee that the sys.path is updated
+from Utils.read_json import inject_test_data
 
 
 @fixture(scope="module")

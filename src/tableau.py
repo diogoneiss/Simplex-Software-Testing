@@ -126,23 +126,6 @@ class TableauParsing:
 
         return full_tableau
 
-    @staticmethod
-    def __fix_negative_b_restrictions(ab_matrix: np.ndarray):
-        """
-        Fixes negative b rows, as we are not using dual simplex method
-        :param ab_matrix: matrix with just a and b
-        :return: modified ab_matrix with only positive b values
-        """
-
-        for i, row in enumerate(ab_matrix):
-            b_i = row[-1]
-
-            is_zero = np.isclose([b_i], [0])
-
-            if not is_zero and b_i < 0:
-                ab_matrix[i] = row * -1
-                
-        return ab_matrix
 
     @staticmethod
     def read_everything_and_create_tableau():
@@ -210,18 +193,8 @@ class TableauParsing:
         :return: generated tableau
         """
 
-
-
         combined_c_ab = TableauParsing.__create_c_ab_tableau(c, a, n_restrictions, m)
-        
+
         full_tableau = TableauParsing.__add_operations_register_tableau(combined_c_ab, n_restrictions)
-        
-        # if b <0 we should multiply by -1
-        full_tableau = TableauParsing.__fix_negative_b_restrictions(full_tableau)
 
-        # sanity check, there should be no negative b values(last column)
-        b_column = full_tableau.T[-1]
-
-        if LinearAlgebra.any_below_zero(b_column):
-            raise Exception(f"Negative b value inputed at b column {b_column}")
         return full_tableau

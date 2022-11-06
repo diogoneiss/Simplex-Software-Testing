@@ -52,16 +52,18 @@ class SimplexRunner:
     def get_optimal_value(self):
         return self.tableau[0][-1]
 
-    def runSimplex(self):
+    def run_simplex(self):
         try:
             # execute phase 1
-
-            auxiliar = AuxiliarLP(self.tableau)
-            tableau_with_trivial_basis = auxiliar.phase_1()
+            if not self.__should_skip_auxiliar():
+                # if there is a trivial solution, skip auxiliar
+                tableau_with_trivial_basis = AuxiliarLP(self.tableau).phase_1()
+            else:
+                tableau_with_trivial_basis = self.tableau
 
             # execute phase 2
             phase2 = Simplex(m=self.m_variables, n=self.n_restrictions, tableau=tableau_with_trivial_basis)
-            
+
             phase2.solve()
 
             self.tableau = phase2.tableau
@@ -69,23 +71,28 @@ class SimplexRunner:
             print(self.get_optimal_value())
             self.print_x_solution()
             self.print_certificate()
-            return 
-
-        # finish until done or unbounded
 
         except UnboundedError as Ub:
             print("ilimitada")
             self.print_certificate(Ub.certificate)
-
-            return
         except UnfeasibleError as Uf:
             print("inviavel")
             self.print_certificate(Uf.certificate)
 
-            return
+    def __should_skip_auxiliar(self):
+        basic_columns = LinearAlgebra.findBasicColumns(self.tableau)
+
+        # if there is a trivial solution, skip auxiliar
+        trivial_basis_found = np.all(basic_columns != -1)
+
+        b_column = self.tableau.T[-1]
+        # if there is a negative b value the trivial solution is unfeasible
+        trivial_solution_is_feasible = not LinearAlgebra.any_below_zero(b_column)
+
+        return trivial_solution_is_feasible and trivial_basis_found
 
 
 # run main
 if __name__ == "__main__":
     tmp = SimplexRunner()
-    tmp.runSimplex()
+    tmp.run_simplex()
