@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
+from exceptions import UnfeasibleError
 from pytest import input_test_data
 import sys
 import io
@@ -64,6 +65,50 @@ class TestAuxiliar:
         b_column = result_tableau[1:, -1]
 
         assert not LinearAlgebra.any_below_zero(b_column)
+
+    def test_raises_unfeasible_exception_and_certificate(self):
+        baseTableau = np.array([
+            [0, 0, 0, -1, -1, -1, -1, 0],
+            [1, 0, 0, 4, 10, -6, -2, 6],
+            [0, 1, 0, -2, 2, -4, 1, 5],
+            [0, 0, 1, -7, -2, 0, 4, 3],
+        ])
+
+        restrictions = LinearAlgebra.get_number_of_n_restrictions(baseTableau)
+
+        pl = AuxiliarLP(baseTableau)
+
+        with pytest.raises(UnfeasibleError) as exc:
+            pl.phase_1()
+        certificate = exc.value.certificate
+
+        assert len(certificate) == restrictions, "Certificate should have the same size as the number of restrictions"
+
+    def test_raises_unfeasible_exception(self):
+        baseTableau = np.array([
+            [-2, 1, -2, 0],
+            [-1, -2, 1, -1],
+            [1, -1, 1, 3]
+        ])
+
+        simplexObj = AuxiliarLP(baseTableau)
+
+        with pytest.raises(UnfeasibleError):
+            simplexObj.phase_1()
+
+    def test_raises_unfeasible_exception_with_certificate(self):
+        baseTableau = np.array([
+            [-6, -1, 1, 0],
+            [5, 1, 1, 1],
+            [-1, 1, 2, 5]
+        ])
+
+        auxiliar = AuxiliarLP(baseTableau)
+
+        with pytest.raises(UnfeasibleError) as exc:
+            auxiliar.phase_1()
+
+        npt.assert_allclose(exc.value.certificate, [11, 1], err_msg="Certificate should be [11, 1]")
 
     def test_synthetic_restrictions_addition(self):
         baseTableau = np.array([

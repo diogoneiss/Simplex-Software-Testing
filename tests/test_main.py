@@ -56,7 +56,7 @@ class TestSimplexRunner:
 
         obj = SimplexRunner()
 
-        obj.runSimplex()
+        obj.run_simplex()
 
         optimal_value = obj.get_optimal_value()
 

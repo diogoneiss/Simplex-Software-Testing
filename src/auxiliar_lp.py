@@ -1,6 +1,4 @@
 import logging
-import math
-
 import numpy as np
 
 from simplex import Simplex
@@ -40,7 +38,7 @@ class AuxiliarLP:
 
         # run simplex
         runner = Simplex(m=m, n=n, tableau=canonical_tableau)
-        self.tableau = runner.solve(phase1=True)
+        self.tableau = runner.solve()
 
         print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
 

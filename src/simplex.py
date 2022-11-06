@@ -18,7 +18,8 @@ class Simplex:
         else:
             self.tableau = tableau.astype(float)
 
-    def solve(self, phase1=False):
+    def solve(self):
+
         self.__remove_values_lower_than_tolerance()
 
         # sanity check, there should be no negative b values(last column)
@@ -27,50 +28,42 @@ class Simplex:
         if LinearAlgebra.any_below_zero(b_column):
             raise Exception(f"Negative b value inputed at b column {b_column}")
 
+        self.assert_not_unbounded()
+
         stop = self.isSimplexDone()
-        counter = 1
+
         while not stop:
-            # remove sporadic small values
-            counter += 1
-
-
-            # check if unbounded
-            if self.isUnbounded(self.tableau):
-                certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-                raise UnboundedError(certificate)
 
             # pivot
             row, column = self.findPivot(self.tableau, n_restrictions=self.n_restrictions)
 
-            # if column == -1:
-            #     if phase1:
-            #         if math.isclose(self.tableau[0][-1], 0):
-            #             break
-            #         else:
-            #             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-            #             raise UnfeasibleError(certificate)
-            #     else:
-            #         break
-
+            # this happens when an unfeasible problem is found
             if column == -1 or row == -1:
                 break
+                # obj_value = self.tableau[0][-1]
+                #
+                # # This is not needed, as we can create rare problemns where the objective function is < 0
+                # if LinearAlgebra.smaller_than_zero(obj_value):
+                #     certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+                #     raise UnfeasibleError(certificate)
 
             self.tableau = self.pivotTableau(self.tableau, row=row, column=column)
             self.__remove_values_lower_than_tolerance()
 
             stop = self.isSimplexDone()
 
-        obj_value = self.tableau[0][-1]
-
-        # this should almost never happen, as the unfeasible check is done in auxiliar problem
-        if LinearAlgebra.smaller_than_zero(obj_value):
-            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-            raise UnfeasibleError(certificate)
+            # check if it became unbounded
+            self.assert_not_unbounded()
 
         return self.tableau
 
     def __remove_values_lower_than_tolerance(self):
         self.tableau = LinearAlgebra.replace_values_smaller_then_tol(self.tableau)
+
+    def assert_not_unbounded(self):
+        if self.isUnbounded(self.tableau):
+            certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+            raise UnboundedError(certificate)
 
     @staticmethod
     def isUnbounded(tableau: np.ndarray):
@@ -103,14 +96,11 @@ class Simplex:
         # return False
 
     def isSimplexDone(self):
-        """ Verifica se o simplex terminou de executar, ou seja, se C > 0 e B > 0
-
-        Args:
-            tableau (np.ndarray): Tableau em forma canônica
-
-        Returns:
-            Bool: Se ele já acabou.
         """
+        Checks if the simplex is done, that is, not more pivotable columns
+        :return:
+        """
+
         start = self.n_restrictions
         end = -1
         c_slice = self.tableau[0][start:end]

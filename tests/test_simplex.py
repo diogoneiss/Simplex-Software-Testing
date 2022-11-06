@@ -136,7 +136,7 @@ class TestSimplex:
 
         npt.assert_equal(result, False)
 
-    def test_raises_unbounded_exception(self):
+    def test_raises_unbounded_exception_for_larger_lp(self):
         baseTableau = np.array([
             [-1, -1, -1, -4, -4, -2, -2, -1, -21],
             [1, 0, 0, 2, 1, 1, 0, -1, 8],
@@ -149,7 +149,7 @@ class TestSimplex:
         with pytest.raises(UnboundedError):
             simplexObj.solve()
 
-    def test_raises_unbounded_exception(self):
+    def test_raises_unbounded_exception_in_trivial_lp(self):
         baseTableau = np.array([
             [0, 0, -1, 0, 0, 0, 0, 0],
             [1, 0, -1, 1, 0, 1, 0, 5],
@@ -161,10 +161,10 @@ class TestSimplex:
         with pytest.raises(UnboundedError):
             simplexObj.solve()
 
-    def test_raises_unbounded_exception_with_certificate(self):
+    def test_raises_unbounded_exception_and_certificate(self):
         baseTableau = np.array([
-            [0,  0, -1,  0,  0,  0,  0,  0],
-            [1,  0, -1,  1,  0,  1,  0,  5],
+            [0, 0, -1, 0, 0, 0, 0, 0],
+            [1, 0, -1, 1, 0, 1, 0, 5],
             [0, 1, -1, 0, 1, 0, 1, 7],
         ])
 
@@ -173,81 +173,39 @@ class TestSimplex:
         with pytest.raises(UnboundedError) as exc:
             simplexObj.solve()
 
-        npt.assert_allclose(exc.value.certificate, [0, 0])
-
-    def test_raises_unfeasible_exception_message(self):
-        baseTableau = np.array([])
-        # ^ insert trivial unfeasible tableau here
-
-        pl = AuxiliarLP(baseTableau)
-
-        with pytest.raises(UnfeasibleError):
-            pl.phase_1()
-
-    def test_raises_unfeasible_exception(self):
-        baseTableau = np.array([
-            [1, 0, 2, 2, 1, 1, 0, 1, -2],
-            [1, 0, 0, 2, 1, 1, 0, 1, 8],
-            [0, 1, 0, 1, 2, 0, 1, -1, 8],
-            [0, 0, 1, 1, 1, 0, 0, -1, 5],
-        ])
-
-        simplexObj = Simplex(m=3, n=8, tableau=baseTableau)
-
-        with pytest.raises(UnfeasibleError):
-            simplexObj.solve(phase1=True)
-
-    def test_raises_unfeasible_exception_with_certificate(self):
-        baseTableau = np.array([
-            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, -4],
-            [-1, 0,  0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
-            [0, -1,  0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
-            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
-            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
-        ])
-
-        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
-
-        with pytest.raises(UnfeasibleError) as exc:
-            simplexObj.solve(phase1=True)
-
-        npt.assert_allclose(exc.value.certificate, [1, 1, 1, 1])
+        npt.assert_allclose(exc.value.certificate, [0, 0], err_msg="Certificate should be instantly unbounded")
 
     def test_is_simplex_not_done(self):
+        """
+        We are not done when there is still a pivotable column, ie, negative value in first row
+        """
         baseTableau = np.array([
-            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, -4],
-            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
-            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
-            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
-            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+            [0, 0, -1, 0, 0, 0, 0, 0],
+            [1, 0, 1, 1, 0, 1, 0, 5],
+            [0, 1, 0, 0, 1, 0, 1, 7],
         ])
 
-        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+        m = LinearAlgebra.get_number_of_m_variables(baseTableau)
+        n = LinearAlgebra.get_number_of_n_restrictions(baseTableau)
 
-        npt.assert_equal(simplexObj.isSimplexDone(), False)
-
-    def test_is_simplex_not_done(self):
-        baseTableau = np.array([
-            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 4],
-            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1],
-            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
-            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
-            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
-        ])
-
-        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
-
-        npt.assert_equal(simplexObj.isSimplexDone(), False)
+        simplexObj = Simplex(m=m, n=n, tableau=baseTableau)
+        done = simplexObj.isSimplexDone()
+        assert not done
 
     def test_is_simplex_done(self):
+        """
+        There are no more pivotable columns, ie, no negative value in first row and the objective value is 0
+        """
+
         baseTableau = np.array([
-            [1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 4],
-            [-1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1],
-            [0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1],
-            [0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 1],
-            [0, 0, 0, -1, -1, -1, -1, 0, 0, 0, -1, 0, 0, 0, 1, 1]
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [1, 0, 1, 1, 0, 1, 0, 5],
+            [0, 1, 0, 0, 1, 0, 1, 7],
         ])
 
-        simplexObj = Simplex(m=3, n=4, tableau=baseTableau)
+        m = LinearAlgebra.get_number_of_m_variables(baseTableau, has_vero=False)
+        n = LinearAlgebra.get_number_of_n_restrictions(baseTableau)
 
-        npt.assert_equal(simplexObj.isSimplexDone(), True)
+        simplexObj = Simplex(m=m, n=n, tableau=baseTableau)
+
+        assert simplexObj.isSimplexDone()
