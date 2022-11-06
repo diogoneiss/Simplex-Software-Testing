@@ -6,7 +6,7 @@ import sys
 import io
 from .conftest import input_data
 from tableau import TableauParsing
-from src.Utils.linear_algebra import LinearAlgebra
+from Utils.linear_algebra import LinearAlgebra
 from pytest_cases import parametrize, fixture_ref
 
 
