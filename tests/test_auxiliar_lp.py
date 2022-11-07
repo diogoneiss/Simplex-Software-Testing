@@ -13,6 +13,9 @@ from Utils.linear_algebra import LinearAlgebra
 class TestAuxiliar:
 
     def test_auxiliar_lp_phase_1(self):
+        """
+        Test the first phase of simplex, auxiliar
+        """
         baseTableau = np.array([
             [0, 0, 0, -3, -2, 0, 0, 0, 0],
             [1, 0, 0, 2, 1, 1, 0, 0, 8],
@@ -33,6 +36,9 @@ class TestAuxiliar:
         npt.assert_allclose(result_tableau, expectedTableau)
 
     def test_auxiliar_tableau_pre_solve(self):
+        """
+        Test if C (tableau's first line) is correct after phase 1
+        """
         baseTableau = np.array([
             [0, 0, 0, -3, -2, 0, 0, 0, 0],
             [1, 0, 0, 2, 1, 1, 0, 0, 8],
@@ -85,6 +91,9 @@ class TestAuxiliar:
         assert len(certificate) == restrictions, "Certificate should have the same size as the number of restrictions"
 
     def test_raises_unfeasible_exception(self):
+        """
+        When the lp is unfeasible, an exception should be raised with its certificate
+        """
         baseTableau = np.array([
             [-2, 1, -2, 0],
             [-1, -2, 1, -1],
