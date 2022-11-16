@@ -29,6 +29,30 @@ class LinearAlgebra:
         return np.all(replaced < 0)
 
     @staticmethod
+    def remove_equal_rows(ab: np.ndarray):
+        """
+        Remove equal rows from the tableau
+        :param ab:
+        :return:
+        """
+
+        tableau = np.copy(ab)
+        removed_rows = []
+        for i in range(0, tableau.shape[0]):
+            for j in range(i + 1, tableau.shape[0]):
+                if j in removed_rows or i == j:
+                    continue
+                quotient = np.divide(tableau[i], tableau[j])
+
+                # check if all elements are equal
+                if np.allclose(quotient, quotient[0]):
+                    logging.debug(f"Removing row {j} from tableau")
+                    removed_rows.append(j)
+
+        tableau = np.delete(tableau, removed_rows, axis=0)
+        return tableau, removed_rows
+
+    @staticmethod
     def smaller_than_zero(number: float):
 
         array = np.array([number])
@@ -123,7 +147,6 @@ class LinearAlgebra:
         x_width = LinearAlgebra.get_number_of_m_variables(tableau) + n_restrictions
 
         cleaned_tableau = LinearAlgebra.drop_vero(tableau, n_restrictions)
-
 
         basic_columns = LinearAlgebra.findBasicColumns(cleaned_tableau, drop_vero=False, drop_b=True)
 

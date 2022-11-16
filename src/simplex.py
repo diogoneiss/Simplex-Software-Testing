@@ -61,7 +61,9 @@ class Simplex:
         self.tableau = LinearAlgebra.replace_values_smaller_then_tol(self.tableau)
 
     def assert_not_unbounded(self):
-        if self.isUnbounded(self.tableau):
+        is_unbounded = self.isUnbounded(self.tableau)
+        if is_unbounded:
+            # print(f"Unbounded problem found at column {column}")
             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
             raise UnboundedError(certificate)
 

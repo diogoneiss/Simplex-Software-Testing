@@ -152,7 +152,6 @@ class AuxiliarLP:
                 # means that the variable in the basis is a synthetic variable
                 if self.__is_synthetic_variable(x_index):
                     print(f"x index {x_index} is synthetic, ie, greater or equal than {self.m_variables}")
-                    LinearAlgebra.matprint(self.tableau)
                     return True
 
             return False
@@ -160,7 +159,6 @@ class AuxiliarLP:
         # se o resultado for negativo, é inviavel
         if result < 0:
             return True
-
     def __restore_original_c(self):
         originalC = self.old_c
 

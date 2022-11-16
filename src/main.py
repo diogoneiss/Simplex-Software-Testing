@@ -35,7 +35,8 @@ class SimplexRunner:
         """
 
         self.n_restrictions, self.m_variables = TableauParsing.read_n_m_dimensions()
-        self.tableau = TableauParsing.read_ab_and_create_tableau(self.n_restrictions, self.m_variables)
+        self.tableau, self.n_restrictions = TableauParsing.read_ab_and_create_tableau(self.n_restrictions,
+                                                                                      self.m_variables)
 
         self.simplex = None
 
@@ -74,6 +75,7 @@ class SimplexRunner:
 
         except UnboundedError as Ub:
             print("ilimitada")
+            self.print_x_solution()
             self.print_certificate(Ub.certificate)
         except UnfeasibleError as Uf:
             print("inviavel")
