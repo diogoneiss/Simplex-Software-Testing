@@ -13,6 +13,9 @@ class TestSimplex:
 
     # @pytest.mark.parametrize("entrada", input)
     def test_simplex_end_tableau(self):
+        """
+        Test if the linear programming was correctly solved
+        """
         entrada = input_test_data[1]
 
         simplex = Simplex(entrada.M_variaveis, entrada.N_restricoes, entrada.FullTableau)
@@ -26,6 +29,9 @@ class TestSimplex:
         npt.assert_allclose(orderedColumns, orderedExpected)
 
     def test_simplex_end_solution(self):
+        """
+        Test if the linear programming solution is right
+        """
         entrada = input_test_data[1]
 
         simplex = Simplex(entrada.M_variaveis, entrada.N_restricoes, entrada.FullTableau)
@@ -36,7 +42,10 @@ class TestSimplex:
 
         npt.assert_allclose(x_solution, expected)
 
-    def test_basic_pivoting(self):
+    def test_basic_tableau_pivoting(self):
+        """
+        Pivot the tableau to given pivot
+        """
         baseTableau = np.array([
             [-2, -3, 0, 0, 0, 0],
             [1, 1, 1, 0, 0, 6],
@@ -61,7 +70,10 @@ class TestSimplex:
 
         npt.assert_allclose(resultC, expectedC)
 
-    def test_repeated_pivots(self):
+    def test_cumulative_pivoting(self):
+        """
+        Pivot given tableau with two different pivots
+        """
         baseTableau = np.array([
             [-2, -3, 0, 0, 0, 0],
             [1, 1, 1, 0, 0, 6],
@@ -113,6 +125,9 @@ class TestSimplex:
         npt.assert_almost_equal(tableau, expectedTableau)
 
     def test_returns_is_unbounded(self):
+        """
+        Tableau with a column with negative values is unbounded
+        """
         baseTableau = np.array([
             [-1, -1, -1, -4, -4, 0, 0, -1, -21],
             [1, 0, 0, 2, 1, 1, 0, -1, 8],
@@ -137,6 +152,9 @@ class TestSimplex:
         npt.assert_equal(result, False)
 
     def test_raises_unbounded_exception_for_larger_lp(self):
+        """
+        An exception should be raised if the lp is unbounded
+        """
         baseTableau = np.array([
             [-1, -1, -1, -4, -4, -2, -2, -1, -21],
             [1, 0, 0, 2, 1, 1, 0, -1, 8],
@@ -150,6 +168,9 @@ class TestSimplex:
             simplexObj.solve()
 
     def test_raises_unbounded_exception_in_trivial_lp(self):
+        """
+        An exception should be raised if the lp is unbounded
+        """
         baseTableau = np.array([
             [0, 0, -1, 0, 0, 0, 0, 0],
             [1, 0, -1, 1, 0, 1, 0, 5],
@@ -162,6 +183,9 @@ class TestSimplex:
             simplexObj.solve()
 
     def test_raises_unbounded_exception_and_certificate(self):
+        """
+        The certificate should be given when the exception is thrown
+        """
         baseTableau = np.array([
             [0, 0, -1, 0, 0, 0, 0, 0],
             [1, 0, -1, 1, 0, 1, 0, 5],

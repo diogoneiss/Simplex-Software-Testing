@@ -19,11 +19,11 @@ class TestTableau:
         assert m == entrada.M_variaveis
         assert n_restrictions == entrada.N_restricoes
 
-    def test_read_input(self):
-        assert True
-
-    def test_read_and_create_tableau(self):
-        assert True
+    # def test_read_input(self):
+    #     assert True
+    #
+    # def test_read_and_create_tableau(self):
+    #     assert True
 
     def test_tableau_slack_variables_with_3_variables(self):
         ab = np.array([[1, 2, 3, 50],
