@@ -12,10 +12,22 @@ logging.basicConfig(
 
 )
 
+"""
+Para entendimento, temos um arquivo main, que possui a classe SimplexRunner, que executa a fase 1 e 2
 
+* auxiliar_lp.py: responsavel pelo auxiliar
+* exceptions.py, que define as exceções utilizadas no programa no caso de inviavel ou ilimitada
+* tableau.py, que lê o arquivo de entrada e cria o tableau no formato correto
+
+Dentro da pasta Utils temos o arquivo linear_algebra.py, que possui funções úteis e modulares para lidar com vários aspectos do simplex.
+
+Esse trabalho foi feito para a disciplina de teste de software, então temos uma pasta /tests, com vários testes em desenvolvimento dentro.
+
+"""
 class SimplexTester:
     """
     Atribuir ao longo da execução do programa e vou conferir se bate num teste de sistema.
+    Eu uso isso para a entrega de teste de software, nao de pesquisa operacional
     """
 
     def __init__(self):
@@ -31,27 +43,34 @@ class SimplexTester:
 
 class SimplexRunner:
     def __init__(self) -> None:
-        """ Cria o objeto e le a entrada
-        """
 
-        self.n_restrictions, self.m_variables = TableauParsing.read_n_m_dimensions()
-        self.tableau, self.n_restrictions = TableauParsing.read_ab_and_create_tableau(self.n_restrictions,
+        # We can have a smaller n, if we have dependent restrictions
+        original_n, self.m_variables = TableauParsing.read_n_m_dimensions()
+        self.tableau, self.n_restrictions = TableauParsing.read_ab_and_create_tableau(original_n,
                                                                                       self.m_variables)
 
-        self.simplex = None
+        self.original_n = original_n
 
     def print_certificate(self, certificate=None):
         if certificate is None:
             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
+
+        # add missing 0's to certificate, corresponding to the removed restrictions
+        # happens when we have dependent restrictions, ie, one scaled by a constant
+        if self.original_n > self.n_restrictions:
+            delta_zeros = self.original_n - self.n_restrictions
+            certificate = np.append(certificate, np.zeros(delta_zeros))
+
         LinearAlgebra.arrayPrint(certificate)
 
     def print_x_solution(self):
-        x_solution = LinearAlgebra.get_solution(self.tableau)
-        x_solutions_without_aux_variables = x_solution[:self.m_variables]
-        LinearAlgebra.arrayPrint(x_solutions_without_aux_variables)
+
+        x_solution = LinearAlgebra.get_x_solution(self.tableau)
+        LinearAlgebra.arrayPrint(x_solution)
 
     def get_optimal_value(self):
-        return self.tableau[0][-1]
+        optimal = self.tableau[0][-1]
+        return round(optimal, 7)
 
     def run_simplex(self):
         try:
@@ -75,7 +94,7 @@ class SimplexRunner:
 
         except UnboundedError as Ub:
             print("ilimitada")
-            self.print_x_solution()
+            LinearAlgebra.arrayPrint(Ub.x_solution)
             self.print_certificate(Ub.certificate)
         except UnfeasibleError as Uf:
             print("inviavel")
@@ -94,7 +113,11 @@ class SimplexRunner:
         return trivial_solution_is_feasible and trivial_basis_found
 
 
+def main():
+    simplex_runner = SimplexRunner()
+    simplex_runner.run_simplex()
+
+
 # run main
 if __name__ == "__main__":
-    tmp = SimplexRunner()
-    tmp.run_simplex()
+    main()

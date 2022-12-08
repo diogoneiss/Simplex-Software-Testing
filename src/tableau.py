@@ -88,29 +88,6 @@ class TableauParsing:
         return first_row
 
     @staticmethod
-    def __create_operations_register(n_restrictions: int):
-
-        """ cria uma matriz com a primeira linha sendo de 0's e o restante sendo uma identidade
-        para constituir o VERO. Formato:
-        | 0 .... 0 0 0 |
-        | 1 .... 0 0 0 |
-        | 0 .... 1 0 0 |
-        | 0 .... 0 1 0 |
-        | 0 .... 0 0 1 |
-        """
-
-        # n width
-        zeros = np.zeros(n_restrictions)
-        # n * n
-        identity = np.identity(n_restrictions)
-
-        # colocar identidade depois da primeira linha
-        # o vstack recebe uma TUPLA e não dois parametros, atenção nisso!
-        operations_register = np.vstack((zeros, identity))
-
-        return operations_register
-
-    @staticmethod
     def __add_operations_register_tableau(tableau, n_restrictions: int):
         """
         Adds an operation register to the left side of tableau, see VERO in the documentation to understand its reason
@@ -119,7 +96,26 @@ class TableauParsing:
         :return: concatenated tableau with vero at beginning
         """
 
-        operations_register = TableauParsing.__create_operations_register(n_restrictions)
+        """ this matrix helps keep track of every gaussian elimination and 
+        will be the inverse o the A coeficients in the base, with the first row being the
+        optimal y solution for the dual problem
+        
+        First row: y^t * B
+        1..n rows: Ab^-1
+        
+        | 0 .... 0 0 0 |
+        | 1 .... 0 0 0 |
+        | 0 .... 1 0 0 |
+        | 0 .... 0 1 0 |
+        | 0 .... 0 0 1 |
+        """
+
+        # n width c
+        zeros = np.zeros(n_restrictions)
+        # n * n Ab
+        identity = np.identity(n_restrictions)
+
+        operations_register = np.vstack((zeros, identity))
 
         full_tableau = np.hstack((operations_register, tableau))
 

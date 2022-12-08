@@ -4,7 +4,7 @@ import numpy.testing as npt
 import sys
 import io
 
-from main import SimplexRunner
+from src.main import SimplexRunner
 
 
 class TestSimplexRunner:

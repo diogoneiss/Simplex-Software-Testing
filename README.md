@@ -1,4 +1,3 @@
-## TODO
+## Simplex: Trabalho conjunto Pesquisa Operacional e Teste de Software
 
-* Adicionar teste que verifica se valores muito pequenos foram removidos
-* Adicionar teste que verifica se b foi corretamente modificado
+O arquivo principal está em src/main.py , o arquivo na raiz apenas chama esse arquivo.

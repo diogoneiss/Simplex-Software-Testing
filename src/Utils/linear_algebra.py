@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import logging
 
@@ -7,7 +9,17 @@ class LinearAlgebra:
     @staticmethod
     def retrive_certificate(tableau, n_restrictions):
         firstRow = tableau[0]
-        return firstRow[:n_restrictions]
+        vero_row = firstRow[:n_restrictions]
+
+        return vero_row
+
+    @staticmethod
+    def get_x_solution(tableau):
+        x_solution = LinearAlgebra.get_solution(tableau)
+        m_variables = LinearAlgebra.get_number_of_m_variables(tableau)
+        x_solutions_without_aux_variables = x_solution[:m_variables]
+
+        return x_solutions_without_aux_variables
 
     @staticmethod
     def replace_values_smaller_then_tol(array):
@@ -42,11 +54,14 @@ class LinearAlgebra:
             for j in range(i + 1, tableau.shape[0]):
                 if j in removed_rows or i == j:
                     continue
-                quotient = np.divide(tableau[i], tableau[j])
+                # silence warnings of division by zero
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    quotient = np.divide(tableau[i], tableau[j])
 
                 # check if all elements are equal
                 if np.allclose(quotient, quotient[0]):
                     logging.debug(f"Removing row {j} from tableau")
+                    logging.debug(f"Row {tableau[j]} is equal to row {tableau[i]}")
                     removed_rows.append(j)
 
         tableau = np.delete(tableau, removed_rows, axis=0)
