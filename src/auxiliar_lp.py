@@ -40,8 +40,6 @@ class AuxiliarLP:
         runner = Simplex(m=m, n=n, tableau=canonical_tableau)
         self.tableau = runner.solve()
 
-        print(f"Objective value for auxiliar: {self.tableau[0][-1]}")
-
         # if a 0 value objective function is not found then it is unfeasible
         if self.is_unfeasible():
             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
@@ -98,7 +96,8 @@ class AuxiliarLP:
 
         abMatrix = np.insert(abMatrix, offset, identityRestrictions, axis=1)
 
-        # insert in basis. I'm doing it this way as we may not need entire identity, just the desired columns and indexes
+        # insert in basis. I'm doing it this way as we may not need entire identity,
+        # just the desired columns and indexes
         for row_index, column_index in enumerate(self.auxiliary_columns):
             if column_index != -1:
                 abMatrix[row_index][column_index] = 1
@@ -152,7 +151,6 @@ class AuxiliarLP:
                 # means that the variable in the basis is a synthetic variable
                 if self.__is_synthetic_variable(x_index):
                     print(f"x index {x_index} is synthetic, ie, greater or equal than {self.m_variables}")
-                    LinearAlgebra.matprint(self.tableau)
                     return True
 
             return False

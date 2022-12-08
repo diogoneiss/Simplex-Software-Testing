@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import logging
 
@@ -7,7 +9,17 @@ class LinearAlgebra:
     @staticmethod
     def retrive_certificate(tableau, n_restrictions):
         firstRow = tableau[0]
-        return firstRow[:n_restrictions]
+        vero_row = firstRow[:n_restrictions]
+
+        return vero_row
+
+    @staticmethod
+    def get_x_solution(tableau):
+        x_solution = LinearAlgebra.get_solution(tableau)
+        m_variables = LinearAlgebra.get_number_of_m_variables(tableau)
+        x_solutions_without_aux_variables = x_solution[:m_variables]
+
+        return x_solutions_without_aux_variables
 
     @staticmethod
     def replace_values_smaller_then_tol(array):
@@ -27,6 +39,33 @@ class LinearAlgebra:
     def all_below_zero(array):
         replaced = LinearAlgebra.replace_values_smaller_then_tol(array)
         return np.all(replaced < 0)
+
+    @staticmethod
+    def remove_equal_rows(ab: np.ndarray):
+        """
+        Remove equal rows from the tableau
+        :param ab:
+        :return:
+        """
+
+        tableau = np.copy(ab)
+        removed_rows = []
+        for i in range(0, tableau.shape[0]):
+            for j in range(i + 1, tableau.shape[0]):
+                if j in removed_rows or i == j:
+                    continue
+                # silence warnings of division by zero
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    quotient = np.divide(tableau[i], tableau[j])
+
+                # check if all elements are equal
+                if np.allclose(quotient, quotient[0]):
+                    logging.debug(f"Removing row {j} from tableau")
+                    logging.debug(f"Row {tableau[j]} is equal to row {tableau[i]}")
+                    removed_rows.append(j)
+
+        tableau = np.delete(tableau, removed_rows, axis=0)
+        return tableau, removed_rows
 
     @staticmethod
     def smaller_than_zero(number: float):
@@ -123,7 +162,6 @@ class LinearAlgebra:
         x_width = LinearAlgebra.get_number_of_m_variables(tableau) + n_restrictions
 
         cleaned_tableau = LinearAlgebra.drop_vero(tableau, n_restrictions)
-
 
         basic_columns = LinearAlgebra.findBasicColumns(cleaned_tableau, drop_vero=False, drop_b=True)
 

@@ -1,9 +1,7 @@
-import math
-
 import numpy as np
 import logging
 from Utils.linear_algebra import LinearAlgebra
-from exceptions import UnboundedError, UnfeasibleError
+from exceptions import UnboundedError
 
 
 class Simplex:
@@ -61,9 +59,11 @@ class Simplex:
         self.tableau = LinearAlgebra.replace_values_smaller_then_tol(self.tableau)
 
     def assert_not_unbounded(self):
-        if self.isUnbounded(self.tableau):
+        is_unbounded = self.isUnbounded(self.tableau)
+        if is_unbounded:
             certificate = LinearAlgebra.retrive_certificate(self.tableau, self.n_restrictions)
-            raise UnboundedError(certificate)
+            x_solution = LinearAlgebra.get_x_solution(self.tableau)
+            raise UnboundedError(certificate, x_solution)
 
     @staticmethod
     def isUnbounded(tableau: np.ndarray):
@@ -77,23 +77,6 @@ class Simplex:
 
         return False
 
-        # for column in tableau[:, ]:
-        #
-        #     # vetor booleano se a coluna é menor que zero
-        #     isNegativeArr = np.where(column < 0)
-        #
-        #     # lembrar c < 0 no tableau implica em c > 0 na funcao objetivo, pq aqui ele está multiplicado
-        #     # por -1, entao preciso ver se ele esta positivo no tableau
-        #     c_negative_in_objective_function = not isNegativeArr[0]
-        #     # se para um x_i seu c verdadeiro é < 0 e o Ai é completamente
-        #     # negativo, podemos concluir que podemos aumentar esse x_i infinitamente, junto de aumentar outro
-        #     # x_j "normal", sem violar nenhuma restricao
-        #     allNegative = np.all(isNegativeArr[1:])
-        #
-        #     if allNegative and c_negative_in_objective_function:
-        #         return True
-        #
-        # return False
 
     def isSimplexDone(self):
         """
@@ -107,11 +90,6 @@ class Simplex:
 
         if LinearAlgebra.any_below_zero(c_slice):
             return False
-
-        # retirei pro caso de termos
-        # for b in self.tableau[:, -1]:
-        #    if b < 0:
-        #        return False
 
         return True
 
@@ -196,25 +174,25 @@ class Simplex:
 
         num_rows, _ = tableau.shape
 
-        pivotableRows = list(range(num_rows))
+        pivotable_rows = list(range(num_rows))
 
-        pivotValue = tableau[row][column]
+        pivot_value = tableau[row][column]
         # print(f"Pivoting {pivotValue} at [{row},{column}] ")
 
-        if pivotValue == 0:
+        if pivot_value == 0:
             logging.fatal(f"Pivoting by 0 at tableau[{row}, {column}]")
 
         # make pivot 1
-        tableau[row] = tableau[row] * (1.0 / pivotValue)
+        tableau[row] = tableau[row] * (1.0 / pivot_value)
 
         # remove pivot row from list, as it is already done
-        idxPivot = pivotableRows.index(row)
-        pivotableRows.pop(idxPivot)
+        idx_pivot = pivotable_rows.index(row)
+        pivotable_rows.pop(idx_pivot)
 
         # print("Pivotable rows", pivotableRows)
 
         # make each value in column zero
-        for current_row in pivotableRows:
+        for current_row in pivotable_rows:
             """
             Se eu tenho
             [[3 2 3],
@@ -228,17 +206,10 @@ class Simplex:
 
             """
 
-            b_i = tableau[current_row, -1]
-
-            # TODO: Ver se isso é a melhor maneira de lidar com b negativo
-            # TODO: Criar um método numericamente seguro de comparação com zero (tolerancia de proximidade)
-            # if b_i < 0:
-            #    tableau[current_row] = tableau[current_row] * - 1
-
             # if the current_row is 0, this will do nothing
-            rowSubtractor = tableau[row] * tableau[current_row][column]
+            row_subtractor = tableau[row] * tableau[current_row][column]
             # print("I want to zero ")
             # print(f"Subtracting {rowSubtractor} from {tableau[current_row]} ")
-            tableau[current_row] -= rowSubtractor
+            tableau[current_row] -= row_subtractor
 
         return tableau

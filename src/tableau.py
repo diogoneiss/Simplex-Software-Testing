@@ -1,7 +1,6 @@
 import numpy as np
-from Utils.linear_algebra import LinearAlgebra
 
-DEBUG_TABLEAU = False
+from Utils.linear_algebra import LinearAlgebra
 
 
 class TableauParsing:
@@ -41,7 +40,7 @@ class TableauParsing:
         """
         Adds slack variables to Ab matrix, such that it will become [A | I | b), with a n * n identity matrix
         :param ab:
-        :param n_restrictions:
+        :param n_restrictions: number of restrictions
         :param m_columns:
         :return: tableau with [A | I | B] combined
         """
@@ -89,29 +88,6 @@ class TableauParsing:
         return first_row
 
     @staticmethod
-    def __create_operations_register(n_restrictions: int):
-
-        """ cria uma matriz com a primeira linha sendo de 0's e o restante sendo uma identidade
-        para constituir o VERO. Formato:
-        | 0 .... 0 0 0 |
-        | 1 .... 0 0 0 |
-        | 0 .... 1 0 0 |
-        | 0 .... 0 1 0 |
-        | 0 .... 0 0 1 |
-        """
-
-        # n width
-        zeros = np.zeros(n_restrictions)
-        # n * n
-        identity = np.identity(n_restrictions)
-
-        # colocar identidade depois da primeira linha
-        # o vstack recebe uma TUPLA e não dois parametros, atenção nisso!
-        operations_register = np.vstack((zeros, identity))
-
-        return operations_register
-
-    @staticmethod
     def __add_operations_register_tableau(tableau, n_restrictions: int):
         """
         Adds an operation register to the left side of tableau, see VERO in the documentation to understand its reason
@@ -120,12 +96,30 @@ class TableauParsing:
         :return: concatenated tableau with vero at beginning
         """
 
-        operations_register = TableauParsing.__create_operations_register(n_restrictions)
+        """ this matrix helps keep track of every gaussian elimination and 
+        will be the inverse o the A coeficients in the base, with the first row being the
+        optimal y solution for the dual problem
+        
+        First row: y^t * B
+        1..n rows: Ab^-1
+        
+        | 0 .... 0 0 0 |
+        | 1 .... 0 0 0 |
+        | 0 .... 1 0 0 |
+        | 0 .... 0 1 0 |
+        | 0 .... 0 0 1 |
+        """
+
+        # n width c
+        zeros = np.zeros(n_restrictions)
+        # n * n Ab
+        identity = np.identity(n_restrictions)
+
+        operations_register = np.vstack((zeros, identity))
 
         full_tableau = np.hstack((operations_register, tableau))
 
         return full_tableau
-
 
     @staticmethod
     def read_everything_and_create_tableau():
@@ -137,6 +131,9 @@ class TableauParsing:
         c, ab = TableauParsing.__read_c_and_ab(n_restrictions)
 
         full_tableau = TableauParsing.create_full_tableau(c, ab, n_restrictions, m_variables)
+
+        n_restrictions = LinearAlgebra.get_number_of_n_restrictions(full_tableau)
+
         return n_restrictions, m_variables, full_tableau
 
     @staticmethod
@@ -145,7 +142,7 @@ class TableauParsing:
         Reads c and ab  from input and create tableau
         :param n_restrictions:
         :param m: number of variables
-        :return: full_tableau
+        :return: full_tableau, new_number_of_restrictions
         """
 
         # reads input and fixes negative b here
@@ -153,7 +150,9 @@ class TableauParsing:
 
         full_tableau = TableauParsing.create_full_tableau(c, ab, n_restrictions, m)
 
-        return full_tableau
+        new_n_restrictions = LinearAlgebra.get_number_of_n_restrictions(full_tableau)
+
+        return full_tableau, new_n_restrictions
 
     @staticmethod
     def __read_c_and_ab(n_restrictions: int):
@@ -168,7 +167,12 @@ class TableauParsing:
 
     @staticmethod
     def __create_c_ab_tableau(c: np.ndarray, a: np.ndarray, n_restrictions: int, m: int):
-        tableau_base = TableauParsing.__add_auxilliary_variables_to_a(a, n_restrictions, m)
+
+        tableau_base, removed_rows = LinearAlgebra.remove_equal_rows(a)
+
+        n_restrictions -= len(removed_rows)
+
+        tableau_base = TableauParsing.__add_auxilliary_variables_to_a(tableau_base, n_restrictions, m)
 
         first_line = TableauParsing.__normalize_first_row(c, n_restrictions)
 
@@ -180,10 +184,10 @@ class TableauParsing:
 
         combined_c_ab = np.vstack((first_line, tableau_base))
 
-        return combined_c_ab
+        return combined_c_ab, n_restrictions
 
     @staticmethod
-    def create_full_tableau(c: np.ndarray, a: np.ndarray, n_restrictions: int, m: int) -> np.ndarray:
+    def create_full_tableau(c: np.ndarray, a: np.ndarray, n_restrictions: int, m: int):
         """
         Creates tableau and adds operation register
         :param c: objective vector
@@ -193,7 +197,7 @@ class TableauParsing:
         :return: generated tableau
         """
 
-        combined_c_ab = TableauParsing.__create_c_ab_tableau(c, a, n_restrictions, m)
+        combined_c_ab, n_restrictions = TableauParsing.__create_c_ab_tableau(c, a, n_restrictions, m)
 
         full_tableau = TableauParsing.__add_operations_register_tableau(combined_c_ab, n_restrictions)
 
