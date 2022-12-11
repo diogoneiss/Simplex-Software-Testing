@@ -19,7 +19,7 @@ for ITEM in "${argsCopy[@]}";
         printf "\n\n" ;
         # passa a entrada como se estivesse digitando no terminal os valores, com o operador
         # de redirecionamento "<"
-        python3 main.py < tests/cases/Testes/"$ITEM" ;
+        python3 ./src/main.py < tests/cases/Testes/"$ITEM" ;
         # ^ troque acima o caminho da main e o caminho para cada arquivo de entrada
         printf "\n\n" ;
         printf "Input $ITEM ran, correct output is\n" ;

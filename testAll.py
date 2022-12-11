@@ -9,7 +9,7 @@ src_path = os.path.join(os.path.dirname(__file__), "src")
 
 # file to run
 file_to_run = os.path.join(src_path, "main.py")
-file_to_run = "main.py"
+
 # Set the directories
 input_directory = 'tests/cases/Testes'
 output_directory = 'tests/cases/Saidas'
