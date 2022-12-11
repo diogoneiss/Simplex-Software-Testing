@@ -3,16 +3,15 @@ import difflib
 import os
 from pathlib import Path
 
-# The folder in which the file you want to run is
-# not needed, as the file is in current directory
-src_path = os.path.join(os.path.dirname(__file__), "src")
+# get the src folder, which is ../src
+src_path = Path(__file__).parent.parent / 'src'
 
 # file to run
 file_to_run = os.path.join(src_path, "main.py")
 
 # Set the directories
-input_directory = 'tests/cases/Testes'
-output_directory = 'tests/cases/Saidas'
+input_directory = Path(__file__).parent / 'cases' / 'Testes'
+output_directory = Path(__file__).parent / 'cases' / 'Saidas'
 
 # Get all of the filenames in the directory
 filenames = os.listdir(input_directory)
@@ -22,7 +21,7 @@ input_files = []
 
 # Iterate through the filenames and append them to the array
 for filename in filenames:
-    input_files.append(str(Path(input_directory) / Path(filename)))
+    input_files.append(str(Path(input_directory) / Path(str(filename))))
 
 # Get all of the filenames in the directory
 filenames = os.listdir(output_directory)
@@ -34,6 +33,20 @@ output_files = []
 for filename in filenames:
     output_files.append(str(Path(output_directory) / Path(filename)))
 
+bash_command = """\
+if hash python3 2>/dev/null; then
+    echo "python3"
+    else
+      echo "python"
+    fi
+"""
+
+result = subprocess.run(bash_command, shell=True, capture_output=True)
+if result.stdout.decode('utf-8').strip() == 'python3':
+    python_command = 'python3'
+else:
+    python_command = 'python'
+
 for i, input_file in enumerate(input_files):
     print(f"Running {input_file}...", end="")
     # Open the input file and read its contents
@@ -41,22 +54,14 @@ for i, input_file in enumerate(input_files):
         input_str = f.read()
 
     # Run the file and pass the input to it
-    try:
-        process = subprocess.run(
-            ['python3', file_to_run],
-            input=input_str,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding="utf-8"
-        )
-    except:
-        process = subprocess.run(
-            ['python', file_to_run],
-            input=input_str,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding="utf-8"
-        )
+
+    process = subprocess.run(
+        [python_command, file_to_run],
+        input=input_str,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8"
+    )
 
     # The file you want to compare the output to
     expected_output_file = output_files[i]

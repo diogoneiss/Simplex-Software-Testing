@@ -167,3 +167,15 @@ class TestUtilLinearAlgebra:
         result = LinearAlgebra.all_below_zero(array)
 
         npt.assert_equal(False, result)
+
+    def test_redundant_rows_removal(self):
+        tableau_with_redundant_last_row = np.array([[1, 1, 0, 0, 5],
+                                                    [-1, 0, -5, 5, -10],
+                                                    [2, 1, 1, -1, 10],
+                                                    [-2, -1, -1, 1, -10]])
+
+        fixed_tableau, removed_rows = LinearAlgebra.remove_equal_rows(tableau_with_redundant_last_row)
+
+        assert len(removed_rows) == 1
+        assert fixed_tableau.shape == (3, 5)
+        assert fixed_tableau.shape != tableau_with_redundant_last_row.shape
