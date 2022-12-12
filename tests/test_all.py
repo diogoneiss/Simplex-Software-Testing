@@ -6,7 +6,7 @@ import numpy.testing as npt
 from pathlib import Path
 
 
-def tests_e2e():
+def test_inout():
 
     # get the src folder, which is ../src
     src_path = Path(__file__).parent.parent / 'src'
@@ -51,6 +51,24 @@ def tests_e2e():
         python_command = 'python3'
     else:
         python_command = 'python'
+
+    messages = [
+        'otima',
+        'inviavel',
+        'ilimitada',
+        'otima - caso com redundancias e solucao degenerada',
+        'inviavel',
+        'inviavel',
+        'inviavel',
+        'otima',
+        'otima',
+        'otima - otimo trivial',
+        'otima',
+        'otima',
+        'ilimitada',
+        'ilimitada',
+        'ilimitada',
+    ]
 
     for i, input_file in enumerate(input_files):
         print(f"Running {input_file}...", end="")
@@ -103,7 +121,7 @@ def tests_e2e():
 
         changes = [l for l in diff if l.startswith('+ ') or l.startswith('- ')]
 
-        npt.assert_equal(len(changes), 0)
+        npt.assert_equal(len(changes), 0, messages[i])
         print()
 
-tests_e2e()
+test_inout()
