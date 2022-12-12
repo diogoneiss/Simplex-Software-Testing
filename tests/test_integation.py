@@ -5,6 +5,7 @@ import numpy.testing as npt
 
 from pathlib import Path
 
+
 def tests_e2e():
 
     # get the src folder, which is ../src
