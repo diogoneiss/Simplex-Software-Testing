@@ -29,3 +29,7 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test with pytest
       run: tox
+    - uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        verbose: true # optional (default = false)
