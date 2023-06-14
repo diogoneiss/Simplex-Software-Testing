@@ -1,5 +1,5 @@
 
-# Trabalho Prático de teste de software
+# Aplicação prática de testes de software no algoritmo de otimização Simplex
 
 Carlos Magalhães e Diogo Neiss
 
